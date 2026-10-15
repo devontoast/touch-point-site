@@ -12,6 +12,13 @@ This repo is the live site at https://touchpointsconce.com. Vercel deploys every
 - `index.html`: the whole page (styles and script inline). Design system notes are in the comment at the top of the `<style>` block.
 - `img/`: product and in-situ photos. `media/`: hero films (`film.mp4` 16:9, `film-mobile.mp4` 9:16) and posters.
 
+## Measurement (in the script block, "measurement")
+- Off until `PLAUSIBLE_SRC` (Plausible install-page script URL) and `META_PIXEL_ID` (pixel from Shopify's Facebook & Instagram app) are filled in. Empty = nothing loads, no banner.
+- Meta is consent-gated: EU/EEA, UK, CH and fr-CA visitors see the consent bar first; others get it by default with "Cookie settings" in the footer to opt out.
+- Site events: ViewContent, AddToCart, Lead (sign-up) to Meta; "Add to cart", "Check out", "Sign up" goals to Plausible. InitiateCheckout and Purchase come from the Shopify app on checkout, never from the site (no double counting).
+- UTM tags, fbclid and external referrer are saved per session and written to the Shopify cart as attributes, so every order shows its source. UTMs are also appended to the checkout link.
+- Debug: `?tpdebug` logs events to the console; `?consent=preview` shows the bar without saving a choice.
+
 ## Shopify (Touch Point store, z1cyje-zy.myshopify.com)
 - Headless storefront "Touch Point site"; its public Storefront token is in `index.html`.
 - Product handle `touch-point-sconce`. Prices come from Shopify markets: $350 CAD everywhere, converted to local currency outside Canada (US market rounds, no fixed USD price). Duties and import taxes outside Canada are paid by the buyer (not collected at checkout).

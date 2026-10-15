@@ -281,6 +281,16 @@ body.drawer-open { overflow: hidden; }
 .drawer-foot .checkout { height: 50px; background: var(--ink); color: var(--white); display: flex; align-items: center; justify-content: center; font-size: var(--t-body); }
 .drawer-foot .checkout:hover { background: var(--ink-hover); text-decoration: none; }
 @media (prefers-reduced-motion: reduce) { .drawer, .drawer-open .drawer, .drawer-scrim { transition: none; } }
+/* consent bar: only appears once the Meta pixel is switched on (see "measurement" in the script) */
+.consent { position: fixed; z-index: 9; left: var(--gl); right: var(--gr); bottom: calc(var(--s4) + env(safe-area-inset-bottom, 0px)); background: var(--white); border: 1px solid var(--ink); padding: var(--s4); display: flex; flex-direction: column; gap: var(--s3); font-size: var(--t-meta); }
+@media (min-width: 640px) { .consent { right: auto; width: 420px; } }
+.consent a { text-decoration: underline; text-underline-offset: 3px; }
+.consent-btns { display: flex; gap: var(--s2); }
+.consent-btns button { flex: 1; height: 40px; border: 1px solid var(--ink); background: var(--white); color: var(--ink); font: 400 var(--t-body) var(--f-text); cursor: pointer; }
+.consent-btns .yes { background: var(--ink); color: var(--white); }
+.consent-btns .yes:hover { background: var(--ink-hover); }
+.cookie-link { color: var(--ink-2); font-size: var(--t-meta); background: none; border: 0; padding: 0; font-family: inherit; cursor: pointer; margin-top: var(--s3); }
+.cookie-link:hover { text-decoration: underline; text-underline-offset: 3px; }
 
 /* full-screen photo view */
 .lb { position: fixed; inset: 0; z-index: 40; background: var(--film-bg); display: flex; align-items: center; justify-content: center; padding: calc(56px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(56px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); opacity: 0; transition: opacity 220ms var(--ease); }
@@ -490,6 +500,7 @@ body.lb-open { overflow: hidden; }
         <button type="submit">Sign up</button>
       </form>
       <p class="label" id="signupMsg" role="status"></p>
+      <button type="button" class="cookie-link" id="cookieLink" hidden>Cookie settings</button>
     </div>
   </div>
 </footer>
@@ -505,6 +516,10 @@ body.lb-open { overflow: hidden; }
   <button class="lb-prev" id="lbPrev" type="button" aria-label="Previous photo"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M7.5 2.5 4 6l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></button>
   <button class="lb-next" id="lbNext" type="button" aria-label="Next photo"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5 8 6 4.5 9.5" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></button>
   <span class="lb-count" id="lbCount"></span>
+</div>
+<div class="consent" id="consent" hidden role="region" aria-label="Cookies">
+  <p>We use a Meta cookie to see which of our ads bring people here. <a href="https://checkout.touchpointsconce.com/policies/privacy-policy">Privacy policy</a></p>
+  <div class="consent-btns"><button type="button" id="consentNo">Decline</button><button type="button" id="consentYes" class="yes">Accept</button></div>
 </div>
 
 <button class="cart-fab" id="cartFab" type="button" hidden aria-haspopup="dialog" aria-controls="drawer">
@@ -804,14 +819,109 @@ body.lb-open { overflow: hidden; }
       const d = await sf(PRODUCT_Q, { h: HANDLE, c: country });
       const v = d.product && d.product.variants.nodes[0];
       if (!v) { setBuyable(false); return; }
-      variantId = v.id;
+      variantId = v.id; unit = v.price;
       $("price").dataset.live = "1";
       showPrice(v.price.amount, v.price.currencyCode);
       setBuyable(!!v.availableForSale);
+      if (!viewed) { viewed = true; track("view"); }
     } catch (e) {
       setBuyable(false, "Try again in a moment");
     }
   }
+  /* ---------- measurement: switched off until the IDs below are filled in ----------
+     PLAUSIBLE_SRC   script URL from Plausible's install page. Cookie-free, so it runs for everyone.
+     META_PIXEL_ID   the pixel that Shopify's "Facebook & Instagram" app creates for the Touch Point store.
+                     Meta sets cookies, so EU/UK/Swiss and French-Canadian visitors see the consent bar
+                     first; everyone else gets it by default and can opt out under "Cookie settings".
+     Checkout and Purchase events come from that Shopify app on checkout.touchpointsconce.com, not from here.
+     Every order also carries where the buyer came from (UTM tags, referrer) as cart attributes.
+     Add ?tpdebug to the URL to log events to the console; ?consent=preview shows the bar without saving. */
+  const PLAUSIBLE_SRC = "", META_PIXEL_ID = "";
+  const qs = new URLSearchParams(location.search), DEBUG = qs.has("tpdebug");
+  let unit = null, viewed = false;
+
+  // where this visitor came from, kept for the browser session
+  const SRC_KEY = "tp-src", UTM = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"];
+  const readSource = () => { try { return JSON.parse(sessionStorage.getItem(SRC_KEY) || "null"); } catch (e) { return null; } };
+  (() => {
+    const s = {};
+    UTM.forEach(k => { const v = qs.get(k); if (v) s[k] = v.slice(0, 120); });
+    if (qs.get("fbclid")) s.fbclid = "yes";
+    try { const r = new URL(document.referrer); if (!/(^|\.)touchpointsconce\.com$/.test(r.hostname)) s.referrer = r.hostname; } catch (e) {}
+    if (!Object.keys(s).length) return;
+    s.landed = new Date().toISOString().slice(0, 10);
+    try { sessionStorage.setItem(SRC_KEY, JSON.stringify(s)); } catch (e) {}
+  })();
+  const sourceAttributes = () => Object.entries(readSource() || {}).map(([key, value]) => ({ key, value: String(value) }));
+  const withSource = url => {
+    const s = readSource(); if (!s || !url) return url;
+    try { const u = new URL(url); UTM.forEach(k => { if (s[k] && !u.searchParams.has(k)) u.searchParams.set(k, s[k]); }); return u.toString(); } catch (e) { return url; }
+  };
+
+  // Plausible (traffic, campaigns, funnel goals)
+  if (PLAUSIBLE_SRC) {
+    window.plausible = window.plausible || function () { (plausible.q = plausible.q || []).push(arguments); };
+    plausible.init = plausible.init || function (o) { plausible.o = o || {}; };
+    plausible.init();
+    const s = document.createElement("script"); s.async = true; s.src = PLAUSIBLE_SRC; s.dataset.domain = location.hostname.replace(/^www\./, "");
+    document.head.appendChild(s);
+  }
+  const pl = (name, props) => { if (PLAUSIBLE_SRC && window.plausible) window.plausible(name, props ? { props } : undefined); };
+
+  // Meta pixel, gated by consent
+  const OPT_IN = new Set("AT BE BG HR CY CZ DK EE FI FR DE GR HU IE IT LV LT LU MT NL PL PT RO SK SI ES SE IS LI NO GB CH".split(" "));
+  const needsOptIn = () => {
+    const tz = (Intl.DateTimeFormat().resolvedOptions().timeZone || "");
+    return tz.startsWith("Europe/") || OPT_IN.has(country) || (navigator.languages || [navigator.language || ""]).some(l => /^fr-CA$/i.test(l));
+  };
+  const CONSENT_KEY = "tp-consent";
+  const getConsent = () => { try { return localStorage.getItem(CONSENT_KEY); } catch (e) { return null; } };
+  const setConsent = v => { try { localStorage.setItem(CONSENT_KEY, v); } catch (e) {} };
+  let metaOn = false; const metaQueue = [];
+  const meta = (...a) => { if (!META_PIXEL_ID) return; if (metaOn) window.fbq(...a); else metaQueue.push(a); };
+  function startMeta() {
+    if (metaOn || !META_PIXEL_ID) return;
+    if (!window.fbq) {
+      const f = window.fbq = function () { f.callMethod ? f.callMethod.apply(f, arguments) : f.queue.push(arguments); };
+      if (!window._fbq) window._fbq = f;
+      f.push = f; f.loaded = true; f.version = "2.0"; f.queue = [];
+      const s = document.createElement("script"); s.async = true; s.src = "https://connect.facebook.net/en_US/fbevents.js";
+      document.head.appendChild(s);
+      window.fbq("init", META_PIXEL_ID);
+    }
+    window.fbq("consent", "grant");
+    window.fbq("track", "PageView");
+    metaOn = true;
+    metaQueue.splice(0).forEach(a => window.fbq(...a));
+  }
+  const bar = $("consent"), previewBar = qs.get("consent") === "preview";
+  const showBar = () => { bar.hidden = false; };
+  $("consentYes").addEventListener("click", () => { bar.hidden = true; if (previewBar) return; setConsent("granted"); startMeta(); });
+  $("consentNo").addEventListener("click", () => { bar.hidden = true; if (previewBar) return; setConsent("denied"); if (window.fbq) window.fbq("consent", "revoke"); metaOn = false; });
+  $("cookieLink").addEventListener("click", showBar);
+  if (META_PIXEL_ID) {
+    const choice = getConsent();
+    $("cookieLink").hidden = false;
+    if (choice === "granted" || (choice !== "denied" && !needsOptIn())) startMeta();
+    else if (!choice) showBar();
+  }
+  if (previewBar) showBar();
+
+  // one place every page event goes through
+  function track(ev, x = {}) {
+    const ids = variantId ? [String(variantId).split("/").pop()] : [];
+    const value = unit ? Math.round(Number(unit.amount) * (x.qty || 1) * 100) / 100 : undefined, currency = unit ? unit.currencyCode : undefined;
+    if (DEBUG) console.log("[tp]", ev, { ...x, value, currency, source: readSource() });
+    if (ev === "view") meta("track", "ViewContent", { content_ids: ids, content_type: "product", content_name: "Touch Point Sconce", value, currency });
+    if (ev === "add") { meta("track", "AddToCart", { content_ids: ids, content_type: "product", content_name: "Touch Point Sconce", value, currency, num_items: x.qty }); pl("Add to cart", { country }); }
+    if (ev === "checkout") pl("Check out", { country });
+    if (ev === "signup") { meta("track", "Lead", { content_name: "Next batch list" }); pl("Sign up"); }
+  }
+  document.addEventListener("click", e => {
+    const a = e.target.closest && e.target.closest("a[href]");
+    if (a && /^checkout\./.test(a.hostname) && /^\/cart\//.test(a.pathname)) track("checkout");
+  }, true);
+
   loadPrice();
 
   /* ---------- cart: Shopify cart, a drawer that opens on add, and a floating button while it holds items ---------- */
@@ -860,7 +970,7 @@ body.lb-open { overflow: hidden; }
     });
     const st = cart.cost.subtotalAmount;
     $("cartSubtotal").textContent = fmt(st.amount, st.currencyCode);
-    $("checkoutLink").href = cart.checkoutUrl;
+    $("checkoutLink").href = withSource(cart.checkoutUrl);
     drawerFoot.hidden = false;
   }
   function setCart(c) { cart = c; saveCart(c); renderCart(); }
@@ -919,10 +1029,14 @@ body.lb-open { overflow: hidden; }
     if (existing) {
       const d = await sf(`mutation A($id: ID!, $lines: [CartLineInput!]!) { cartLinesAdd(cartId: $id, lines: $lines) { cart { ${CART_FIELDS} } userErrors { message } } }`, { id: existing.id, lines });
       const r = d.cartLinesAdd;
-      if (r.cart && !(r.userErrors || []).length) return r.cart;
+      if (r.cart && !(r.userErrors || []).length) {
+        const attributes = sourceAttributes();   // a later visit from an ad updates where the order came from
+        if (attributes.length) sf(`mutation U($id: ID!, $a: [AttributeInput!]!) { cartAttributesUpdate(cartId: $id, attributes: $a) { userErrors { message } } }`, { id: r.cart.id, a: attributes }).catch(() => {});
+        return r.cart;
+      }
     }
     const d = await sf(`mutation N($input: CartInput!) { cartCreate(input: $input) { cart { ${CART_FIELDS} } userErrors { message } } }`,
-      { input: { lines, buyerIdentity: { countryCode: country } } });
+      { input: { lines, buyerIdentity: { countryCode: country }, attributes: sourceAttributes() } });
     const r = d.cartCreate;
     if (!r.cart) throw new Error((r.userErrors[0] || {}).message || "Cart error");
     return r.cart;
@@ -934,6 +1048,7 @@ body.lb-open { overflow: hidden; }
     try {
       const c = await addToCart();
       setCart(c); openDrawer(qty);
+      track("add", { qty });
     } catch (e) {
       $("addNote").textContent = "That didn't go through. Try again, or email hello@touchpointsconce.com.";
     }
@@ -951,7 +1066,7 @@ body.lb-open { overflow: hidden; }
       const d = await sf(`mutation S($input: CustomerCreateInput!) { customerCreate(input: $input) { customer { id } customerUserErrors { code message } } }`,
         { input: { email: v, password: pw, acceptsMarketing: true } });
       const errs = d.customerCreate.customerUserErrors || [];
-      if (!errs.length || errs.some(x => x.code === "TAKEN" || x.code === "CUSTOMER_DISABLED")) { msg.textContent = "Thanks. We'll write when the next batch opens."; $("email").value = ""; }
+      if (!errs.length || errs.some(x => x.code === "TAKEN" || x.code === "CUSTOMER_DISABLED")) { msg.textContent = "Thanks. We'll write when the next batch opens."; $("email").value = ""; track("signup"); }
       else msg.textContent = "That didn't go through. Email hello@touchpointsconce.com and we'll add you.";
     } catch (err) {
       msg.textContent = "That didn't go through. Email hello@touchpointsconce.com and we'll add you.";
