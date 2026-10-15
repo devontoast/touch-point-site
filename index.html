@@ -80,6 +80,7 @@ p { margin: 0; }
 .label, .meta { font: 400 var(--t-meta)/1.6 var(--f-text); color: var(--ink-2); }
 .num { font-variant-numeric: tabular-nums; }
 .go { color: var(--ink-2); }
+.go .arr { width: .8em; height: .8em; display: inline-block; vertical-align: .02em; }
 .wm { display: block; height: auto; }
 .wm svg { display: block; width: 100%; height: auto; }
 .dot::before, .preorder::before { content: ""; display: inline-block; width: var(--dot); height: var(--dot); border-radius: 50%; background: var(--ink); margin-right: var(--s2); vertical-align: 1px; flex: none; }
@@ -204,7 +205,9 @@ section.details, section.home, section.about, section.press { padding-block: var
 .about-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s5); align-items: start; }
 @media (min-width: 760px) { .about-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--s7); } }
 .portrait { margin: 0; aspect-ratio: 4 / 5; background: var(--tile); display: flex; align-items: flex-end; padding: var(--s4); }
-.about-copy { display: flex; flex-direction: column; gap: var(--s4); max-width: 52ch; }
+.about-copy { display: flex; flex-direction: column; gap: var(--s4); }
+.about-copy > p { max-width: 62ch; }
+.about-copy .lede { max-width: 30ch; }
 .about-copy .lede { font-size: var(--t-head); line-height: 1.15; letter-spacing: -.01em; }
 .people { margin-top: var(--s2); }
 .people li { position: relative; display: flex; justify-content: space-between; gap: var(--s4); }
@@ -396,8 +399,8 @@ footer { border-top: 1px solid var(--rule-strong); padding-block: var(--s7) calc
         <p class="lede">Touch Point comes from two different kinds of design.</p>
         <p>Most of the products designers make are analog: a chair, a vessel, a lamp with a switch. Technology products answer to other priorities, like how an object senses you, responds, and behaves over time. We come to design from different backgrounds, and Touch Point sits where those two worlds meet: an object with the honesty of furniture and the responsiveness of a device.</p>
         <ul class="people rows">
-          <li><a href="https://www.markkhourydesign.com" target="_blank" rel="noopener">Mark Khoury</a><span class="go" aria-hidden="true">↗</span></li>
-          <li><a href="https://devansh.ca" target="_blank" rel="noopener">Devansh Shah</a><span class="go" aria-hidden="true">↗</span></li>
+          <li><a href="https://www.markkhourydesign.com" target="_blank" rel="noopener">Mark Khoury</a><span class="go" aria-hidden="true"><svg class="arr" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2.5 7.5 7.5 2.5M3.5 2.5h4v4" fill="none" stroke="currentColor" stroke-width="1.1"/></svg></span></li>
+          <li><a href="https://devansh.ca" target="_blank" rel="noopener">Devansh Shah</a><span class="go" aria-hidden="true"><svg class="arr" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2.5 7.5 7.5 2.5M3.5 2.5h4v4" fill="none" stroke="currentColor" stroke-width="1.1"/></svg></span></li>
         </ul>
       </div>
     </div>
@@ -411,11 +414,11 @@ footer { border-top: 1px solid var(--rule-strong); padding-block: var(--s7) calc
     </div>
     <ul class="main press-list rows">
       <li><a href="https://designto.org/awards/2026-designto-awards/" target="_blank" rel="noopener">
-        <span class="label">DesignTO</span><span class="ttl">2026 DesignTO Awards: Juror's Choice</span><span class="go" aria-hidden="true">↗</span></a></li>
+        <span class="label">DesignTO</span><span class="ttl">2026 DesignTO Awards: Juror's Choice</span><span class="go" aria-hidden="true"><svg class="arr" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2.5 7.5 7.5 2.5M3.5 2.5h4v4" fill="none" stroke="currentColor" stroke-width="1.1"/></svg></span></a></li>
       <li><a href="https://www.azuremagazine.com/article/photo-recap-designto-festival-toronto-2026/" target="_blank" rel="noopener">
-        <span class="label">Azure Magazine</span><span class="ttl">Photo Recap: DesignTO Festival Toronto 2026</span><span class="go" aria-hidden="true">↗</span></a></li>
+        <span class="label">Azure Magazine</span><span class="ttl">Photo Recap: DesignTO Festival Toronto 2026</span><span class="go" aria-hidden="true"><svg class="arr" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2.5 7.5 7.5 2.5M3.5 2.5h4v4" fill="none" stroke="currentColor" stroke-width="1.1"/></svg></span></a></li>
       <li><a href="https://design-milk.com/take-5-balloon-flowers-an-interactive-wall-sconce-magazine-land-more-2/" target="_blank" rel="noopener">
-        <span class="label">Design Milk</span><span class="ttl">Take 5: Balloon Flowers, an Interactive Wall Sconce, Magazine Land &amp; More</span><span class="go" aria-hidden="true">↗</span></a></li>
+        <span class="label">Design Milk</span><span class="ttl">Take 5: Balloon Flowers, an Interactive Wall Sconce, Magazine Land &amp; More</span><span class="go" aria-hidden="true"><svg class="arr" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2.5 7.5 7.5 2.5M3.5 2.5h4v4" fill="none" stroke="currentColor" stroke-width="1.1"/></svg></span></a></li>
     </ul>
   </div>
 </section>
