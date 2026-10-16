@@ -191,11 +191,6 @@ section.details, section.home, section.about, section.press { padding-block: var
 .spec-list dd .u { color: var(--ink-2); }
 @media (max-width: 520px) { .spec-list > div { grid-template-columns: minmax(0, 1fr); gap: var(--s1); } }
 .tbd { font-size: var(--t-meta); color: var(--cord-ink); background: var(--cord-wash); padding: 1px 6px; white-space: nowrap; }
-.ship-table { width: 100%; border-collapse: collapse; }
-.ship-table td { padding-block: var(--row); border-bottom: 1px solid var(--rule); vertical-align: top; }
-.ship-table td:first-child { color: var(--ink-2); }
-.ship-table td:last-child { text-align: right; padding-left: var(--s4); }
-.ship-table tr:last-child td { border-bottom: 0; }
 
 /* ---------- at home ---------- */
 .home-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s3); }
@@ -347,15 +342,11 @@ footer { border-top: 1px solid var(--rule-strong); padding-block: var(--s7) calc
         <details>
           <summary>Shipping and returns</summary>
           <div class="body">
-            <p>Orders ship in the order they were placed, starting early November 2026.</p>
-            <table class="ship-table">
-              <tr><td>Shipping to</td><td id="sCountry">Canada</td></tr>
-              <tr><td>Price</td><td class="num" id="sPrice">$300 CAD</td></tr>
-              <tr><td>Shipping</td><td id="sShip">—</td></tr>
-              <tr><td>Duties and taxes</td><td id="sDuty">—</td></tr>
-            </table>
+            <p>Touch Point is $300 CAD. Outside Canada it's shown in your local currency.</p>
+            <p>Shipping is calculated at checkout. In Canada, taxes are added at checkout too.</p>
+            <p>Outside Canada, import duties and taxes aren't included and are paid by you. Your carrier may collect them on delivery.</p>
             <p id="sPlug" hidden>Touch Point ships with a North American 120 V plug.</p>
-            <p>All sales are final.</p>
+            <p>Orders ship in the order they were placed, starting early November 2026. All sales are final.</p>
           </div>
         </details>
         <details>
@@ -518,10 +509,6 @@ footer { border-top: 1px solid var(--rule-strong); padding-block: var(--s7) calc
     ES: "Spain", NL: "Netherlands", BE: "Belgium", PT: "Portugal", AT: "Austria", FI: "Finland", DK: "Denmark", SE: "Sweden",
     NO: "Norway", CH: "Switzerland", AU: "Australia", NZ: "New Zealand", JP: "Japan", KR: "South Korea", SG: "Singapore",
     HK: "Hong Kong", MX: "Mexico" };
-  const NOTE = {
-    CA: { ship: "Calculated at checkout", duty: "No import duties. Taxes added at checkout." },
-    US: { ship: "Calculated at checkout", duty: "Included. Nothing more to pay on delivery." }
-  };
   const TZ = {
     "America/Toronto": "CA", "America/Montreal": "CA", "America/Vancouver": "CA", "America/Edmonton": "CA", "America/Winnipeg": "CA",
     "America/Halifax": "CA", "America/St_Johns": "CA", "America/Regina": "CA", "America/Moncton": "CA", "America/Whitehorse": "CA",
@@ -558,16 +545,11 @@ footer { border-top: 1px solid var(--rule-strong); padding-block: var(--s7) calc
   let country = fromHash() || detectCountry(), qty = 1, variantId = null, buyable = false;
   window.addEventListener("hashchange", () => { const h = fromHash(); if (h && h !== country) { country = h; loadPrice(); } });
 
-  const FALLBACK = { CA: ["300", "CAD"], US: ["349", "USD"] };
+  const FALLBACK = { CA: ["300", "CAD"] };
   function showPrice(amount, cur) {
     $("price").textContent = fmt(amount, cur);
-    $("sPrice").textContent = fmt(amount, cur);
   }
   function showCountry() {
-    const n = NOTE[country];
-    $("sCountry").textContent = NAMES[country] || country;
-    $("sShip").textContent = n ? n.ship : "Calculated at checkout";
-    $("sDuty").textContent = n ? n.duty : "Not included. Your carrier may collect them on delivery.";
     $("sPlug").hidden = country === "CA" || country === "US";
   }
   function setBuyable(ok, label) {
