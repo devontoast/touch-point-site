@@ -89,7 +89,10 @@ p { margin: 0; }
 
 /* ---------- hero film ---------- */
 .hero { position: relative; height: min(100svh, 177.78vw); min-height: min(520px, 177.78vw); overflow: hidden; background: var(--film-bg); color: var(--on-film); }
-.hero video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.hero video, .hero .film-poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+/* the still frame is a plain image; the video stays invisible until it is really playing, so a browser's own play icon can never show */
+.hero video { opacity: 0; transition: opacity 400ms var(--ease); }
+.hero video.is-playing { opacity: 1; }
 .hero::after { content: ""; position: absolute; inset: auto 0 0 0; height: 45%; background: linear-gradient(to top, var(--scrim), transparent); pointer-events: none; }
 .hero-copy {
   position: absolute; z-index: 2; left: 0; right: 0; bottom: 0;
@@ -303,6 +306,7 @@ body.lb-open { overflow: hidden; }
 
 
 <section class="hero" id="top" aria-label="Touch Point film">
+  <img class="film-poster" id="filmPoster" alt="" aria-hidden="true">
   <video id="film" autoplay muted loop playsinline preload="auto" aria-hidden="true"
     data-wide="media/film.mp4" data-wide-poster="media/film-poster.jpg"
     data-tall="media/film-mobile.mp4" data-tall-poster="media/film-mobile-poster.jpg"></video>
@@ -527,7 +531,7 @@ body.lb-open { overflow: hidden; }
     if (wantKey === k) return;
     wantKey = k;
     const t = film.currentTime || 0, wasPaused = film.paused && film.getAttribute("src");
-    film.poster = film.dataset[k + "Poster"];
+    $("filmPoster").src = film.dataset[k + "Poster"];
     film.src = film.dataset[k];
     if (t) { try { film.currentTime = t; } catch (e) {} }
     if (!wasPaused) Promise.resolve().then(() => { if (!reduce) startFilm(); });
@@ -573,7 +577,7 @@ body.lb-open { overflow: hidden; }
   const soundOff = () => { fadeTo(0, () => { film.muted = true; film.volume = 1; showSound(); }); };
   /* Start silent: every browser allows muted autoplay, while trying to start with sound makes some phones pause the film. */
   const playBtn = $("playBtn");
-  const showPlay = () => { playBtn.hidden = !film.paused; };
+  const showPlay = () => { playBtn.hidden = !film.paused; if (film.paused) film.classList.remove("is-playing"); };
   async function startFilm() {
     if (reduce) { showPlay(); return; }
     film.muted = true;
@@ -581,7 +585,7 @@ body.lb-open { overflow: hidden; }
     showSound();
     setTimeout(showPlay, 400);
   }
-  film.addEventListener("playing", () => { playBtn.hidden = true; });
+  film.addEventListener("playing", () => { playBtn.hidden = true; film.classList.add("is-playing"); });
   film.addEventListener("pause", () => setTimeout(showPlay, 300));
   setTimeout(showPlay, 2500); /* if the browser never started it (e.g. iPhone Low Power Mode), offer the button */
   /* Pressing play is a tap, so the sound comes on with it (unless the visitor muted it with the speaker button). */
