@@ -206,16 +206,18 @@ section.details, section.home, section.about, section.press { padding-block: var
 }
 
 /* ---------- about ---------- */
-.about-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s5); align-items: start; }
-@media (min-width: 760px) { .about-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--s7); } }
-.portrait { margin: 0; aspect-ratio: 4 / 5; background: var(--tile); display: flex; align-items: flex-end; padding: var(--s4); }
-.about-copy { display: flex; flex-direction: column; gap: var(--s4); }
-.about-copy > p { max-width: 62ch; }
-.about-copy .lede { max-width: 30ch; }
-.about-copy .lede { font-size: var(--t-head); line-height: 1.15; letter-spacing: -.01em; }
-.people { margin-top: var(--s2); }
-.people li { position: relative; display: flex; justify-content: space-between; gap: var(--s4); }
+/* No portrait yet: the text and the two designers sit side by side under one rule, level with the label. */
+.about-copy { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s6); }
+@media (min-width: 960px) { .about-copy { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: var(--s8); border-top: 1px solid var(--rule); padding-top: var(--row); } }
+.about-copy > p { font-size: var(--t-item); line-height: 1.55; max-width: 52ch; }
+.people { border-top: 0; }
+.people li { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 var(--s4); align-items: baseline; }
+.people li:first-child { padding-top: 0; }
+.people .site { grid-column: 1; color: var(--ink-2); font-size: var(--t-meta); }
+.people .go { grid-column: 2; grid-row: 1; }
 .people a::after { content: ""; position: absolute; inset: 0; }
+.people li:hover a { text-decoration: underline; text-underline-offset: 3px; }
+@media (max-width: 959px) { .people { border-top: 1px solid var(--rule); } .people li:first-child { padding-top: var(--row); } }
 
 /* ---------- press ---------- */
 .press-list a { display: grid; grid-template-columns: var(--col-label) minmax(0, 1fr) 20px; gap: var(--s4); align-items: baseline; }
@@ -437,8 +439,8 @@ body.lb-open { overflow: hidden; }
       <div class="about-copy">
         <p>Mark Khoury &amp; Devansh Shah are designers based in Toronto working across lighting, furniture, and object design. From exhibiting at the same shows, hosting events together, and a general entwining of their circles, developing a product was a natural next step in their collaboration. Leveraging their complementary skillsets across industrial design, creative technologies, research, and engineering, Touch Point is the first outcome of two practices harmoniously converging.</p>
         <ul class="people rows">
-          <li><a href="https://www.markkhourydesign.com" target="_blank" rel="noopener">Mark Khoury</a><span class="go" aria-hidden="true"><svg class="arr" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2.5 7.5 7.5 2.5M3.5 2.5h4v4" fill="none" stroke="currentColor" stroke-width="1.1"/></svg></span></li>
-          <li><a href="https://devansh.ca" target="_blank" rel="noopener">Devansh Shah</a><span class="go" aria-hidden="true"><svg class="arr" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2.5 7.5 7.5 2.5M3.5 2.5h4v4" fill="none" stroke="currentColor" stroke-width="1.1"/></svg></span></li>
+          <li><a href="https://www.markkhourydesign.com" target="_blank" rel="noopener">Mark Khoury</a><span class="site">markkhourydesign.com</span><span class="go" aria-hidden="true"><svg class="arr" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2.5 7.5 7.5 2.5M3.5 2.5h4v4" fill="none" stroke="currentColor" stroke-width="1.1"/></svg></span></li>
+          <li><a href="https://devansh.ca" target="_blank" rel="noopener">Devansh Shah</a><span class="site">devansh.ca</span><span class="go" aria-hidden="true"><svg class="arr" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2.5 7.5 7.5 2.5M3.5 2.5h4v4" fill="none" stroke="currentColor" stroke-width="1.1"/></svg></span></li>
         </ul>
       </div>
     </div>
