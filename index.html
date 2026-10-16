@@ -247,7 +247,7 @@ footer { border-top: 1px solid var(--rule-strong); padding-block: var(--s7) calc
 .signup #signupMsg { min-height: 1.6em; }
 
 /* ---------- cart: floating button + drawer ---------- */
-.cart-fab { position: fixed; z-index: 20; top: calc(var(--s3) + env(safe-area-inset-top, 0px)); right: var(--gr); }
+.cart-fab { position: fixed; z-index: 20; top: calc(var(--s7) + env(safe-area-inset-top, 0px)); right: calc(var(--gr) + var(--s4)); } /* same inset as the wordmark on the film */
 .cart-fab .count { font-variant-numeric: tabular-nums; }
 .cart-fab svg { width: 18px; height: 18px; display: block; }
 .drawer-scrim { position: fixed; inset: 0; z-index: 30; background: var(--scrim); opacity: 0; pointer-events: none; transition: opacity 320ms var(--ease); }
