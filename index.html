@@ -107,6 +107,7 @@ p { margin: 0; }
 
 /* ---------- section frame: label column + content ---------- */
 section.details, section.home, section.about, section.press { padding-block: var(--s5) var(--s9); }
+.hero + section.home { padding-block: var(--s8) 0; }
 .frame { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s4) var(--s7); }
 @media (min-width: 960px) { .frame { grid-template-columns: var(--col-label) minmax(0, 1fr); } }
 .frame > .side { display: flex; flex-direction: column; gap: var(--s2); padding-top: var(--row); border-top: 1px solid var(--rule-strong); }
@@ -279,6 +280,19 @@ body.drawer-open { overflow: hidden; }
   </button>
 </section>
 
+<section class="home" id="home" aria-labelledby="homeTitle">
+  <div class="inner frame">
+    <div class="side">
+      <span class="dot" id="homeTitle">At home</span>
+    </div>
+    <div class="main home-grid">
+      <figure><div class="shot"><img src="img/insitu-reach.jpg" width="1600" height="1306" alt="A woman in bed reaching toward a lit Touch Point"></div></figure>
+      <figure><div class="shot"><img src="img/insitu-dock.jpg" width="1600" height="1306" alt="A hand docking the puck on a lit Touch Point"></div></figure>
+      <figure><div class="shot"><img src="img/insitu-bedside.jpg" width="1600" height="1306" alt="Touch Point lit above a bedside table, the yellow cord hanging from the puck"></div></figure>
+    </div>
+  </div>
+</section>
+
 <section class="product" id="product" aria-labelledby="pName">
   <div class="inner">
     <div class="product-grid" id="lightScope">
@@ -376,19 +390,6 @@ body.drawer-open { overflow: hidden; }
           </div>
         </details>
       </div>
-    </div>
-  </div>
-</section>
-
-<section class="home" id="home" aria-labelledby="homeTitle">
-  <div class="inner frame">
-    <div class="side">
-      <span class="dot" id="homeTitle">At home</span>
-    </div>
-    <div class="main home-grid">
-      <figure><div class="shot"><img src="img/insitu-reach.jpg" width="1600" height="1306" alt="A woman in bed reaching toward a lit Touch Point" loading="lazy"></div></figure>
-      <figure><div class="shot"><img src="img/insitu-dock.jpg" width="1600" height="1306" alt="A hand docking the puck on a lit Touch Point" loading="lazy"></div></figure>
-      <figure><div class="shot"><img src="img/insitu-bedside.jpg" width="1600" height="1306" alt="Touch Point lit above a bedside table, the yellow cord hanging from the puck" loading="lazy"></div></figure>
     </div>
   </div>
 </section>
