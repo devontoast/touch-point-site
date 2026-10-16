@@ -345,7 +345,6 @@ footer { border-top: 1px solid var(--rule-strong); padding-block: var(--s7) calc
             <p>Touch Point is $300 CAD. Outside Canada it's shown in your local currency.</p>
             <p>Shipping is calculated at checkout. In Canada, taxes are added at checkout too.</p>
             <p>Outside Canada, import duties and taxes aren't included and are paid by you. Your carrier may collect them on delivery.</p>
-            <p id="sPlug" hidden>Touch Point ships with a North American 120 V plug.</p>
             <p>Orders ship in the order they were placed, starting early November 2026. All sales are final.</p>
           </div>
         </details>
@@ -549,9 +548,6 @@ footer { border-top: 1px solid var(--rule-strong); padding-block: var(--s7) calc
   function showPrice(amount, cur) {
     $("price").textContent = fmt(amount, cur);
   }
-  function showCountry() {
-    $("sPlug").hidden = country === "CA" || country === "US";
-  }
   function setBuyable(ok, label) {
     buyable = ok;
     $("addBtn").disabled = !ok;
@@ -560,7 +556,6 @@ footer { border-top: 1px solid var(--rule-strong); padding-block: var(--s7) calc
   const PRODUCT_Q = `query P($h: String!, $c: CountryCode) @inContext(country: $c) {
     product(handle: $h) { availableForSale variants(first: 1) { nodes { id availableForSale price { amount currencyCode } } } } }`;
   async function loadPrice() {
-    showCountry();
     const fb = FALLBACK[country] || FALLBACK.CA;
     if (!$("price").dataset.live) showPrice(fb[0], fb[1]);
     try {
