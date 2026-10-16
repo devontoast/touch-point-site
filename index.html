@@ -97,6 +97,8 @@ p { margin: 0; }
   display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--s4) var(--s6); align-items: end;
 }
 .hero-copy h1 { margin: 0; width: clamp(150px, 18vw, 250px); }
+/* hide the browser's own play icon (iPhone Safari draws one when autoplay is blocked); the site's play button replaces it */
+.hero video::-webkit-media-controls, .hero video::-webkit-media-controls-panel, .hero video::-webkit-media-controls-overlay-play-button, .hero video::-webkit-media-controls-start-playback-button { display: none !important; -webkit-appearance: none; opacity: 0; }
 .play-btn { position: absolute; z-index: 3; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 72px; height: 72px; border: 1px solid rgba(255,255,255,.75); border-radius: 50%; background: rgba(0,0,0,.22); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); color: var(--on-film); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
 .play-btn:hover { background: rgba(0,0,0,.35); }
 .play-btn svg { width: 26px; height: 26px; margin-left: 3px; }
