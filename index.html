@@ -134,7 +134,7 @@ section.details, section.home, section.about, section.press { padding-block: var
 .shot.land32 { aspect-ratio: 3 / 2; }
 .shot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; user-select: none; -webkit-user-drag: none; }
 .gallery .shot { aspect-ratio: 4 / 5; }
-.shot.pair { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.shot.pair, .home-slider .slide { cursor: zoom-in; -webkit-tap-highlight-color: transparent; }
 .shot .on { opacity: 0; transition: opacity var(--fade) var(--ease); }
 .shot.pair.is-on .on { opacity: 1; }
 .dots { display: none; justify-content: center; gap: var(--s2); padding-top: var(--s3); }
@@ -274,6 +274,19 @@ body.drawer-open { overflow: hidden; }
 .drawer-foot .checkout { height: 50px; background: var(--ink); color: var(--white); display: flex; align-items: center; justify-content: center; font-size: var(--t-body); }
 .drawer-foot .checkout:hover { background: var(--ink-hover); text-decoration: none; }
 @media (prefers-reduced-motion: reduce) { .drawer, .drawer-open .drawer, .drawer-scrim { transition: none; } }
+
+/* full-screen photo view */
+.lb { position: fixed; inset: 0; z-index: 40; background: var(--film-bg); display: flex; align-items: center; justify-content: center; padding: calc(56px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(56px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); opacity: 0; transition: opacity 220ms var(--ease); }
+.lb.show { opacity: 1; }
+.lb img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display: block; user-select: none; -webkit-user-drag: none; }
+.lb button { position: absolute; width: 44px; height: 44px; border: 0; background: none; color: var(--on-film); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.lb button svg { width: 18px; height: 18px; }
+.lb .lb-close { top: calc(8px + env(safe-area-inset-top, 0px)); right: max(8px, env(safe-area-inset-right, 0px)); }
+.lb .lb-prev { left: max(4px, env(safe-area-inset-left, 0px)); top: 50%; transform: translateY(-50%); }
+.lb .lb-next { right: max(4px, env(safe-area-inset-right, 0px)); top: 50%; transform: translateY(-50%); }
+.lb .lb-count { position: absolute; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); left: 0; right: 0; text-align: center; color: rgba(255,255,255,.7); font-size: var(--t-meta); font-variant-numeric: tabular-nums; }
+body.lb-open { overflow: hidden; }
+@media (prefers-reduced-motion: reduce) { .lb { transition: none; } }
 
 .toast { position: fixed; z-index: 10; left: 50%; transform: translateX(-50%); bottom: calc(var(--s5) + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--white); font-size: var(--t-meta); padding: var(--s3) var(--s4); max-width: calc(100% - 32px); text-align: center; }
 
@@ -468,6 +481,13 @@ body.drawer-open { overflow: hidden; }
 </footer>
 
 <div class="toast" id="toast" hidden role="status"></div>
+<div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="Photo">
+  <img id="lbImg" alt="">
+  <button class="lb-close" id="lbClose" type="button" aria-label="Close photo"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M1.5 1.5l11 11M12.5 1.5l-11 11" stroke="currentColor" stroke-width="1.2"/></svg></button>
+  <button class="lb-prev" id="lbPrev" type="button" aria-label="Previous photo"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M7.5 2.5 4 6l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></button>
+  <button class="lb-next" id="lbNext" type="button" aria-label="Next photo"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5 8 6 4.5 9.5" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></button>
+  <span class="lb-count" id="lbCount"></span>
+</div>
 
 <button class="cart-fab" id="cartFab" type="button" hidden aria-haspopup="dialog" aria-controls="drawer">
   <span>Cart</span><span class="count" id="cartCount">0</span>
@@ -591,6 +611,40 @@ body.drawer-open { overflow: hidden; }
   /* ---------- At home slider: loops forever in both directions ----------
      The slides are copied once before and once after the real set; whenever scrolling settles in a copy,
      the slider jumps by one set width to the same picture in the middle set, so the edge is never reached. */
+  /* ---------- full-screen photo view ---------- */
+  const lb = $("lb"), lbImg = $("lbImg");
+  let lbItems = [], lbIndex = 0, lbBack = null;
+  const lbShow = () => {
+    const it = lbItems[lbIndex](); lbImg.src = it.src; lbImg.alt = it.alt;
+    $("lbCount").textContent = lbItems.length > 1 ? (lbIndex + 1) + " / " + lbItems.length : "";
+    $("lbPrev").hidden = $("lbNext").hidden = lbItems.length < 2;
+  };
+  function openPhoto(items, i) {
+    lbItems = items; lbIndex = i; lbBack = document.activeElement; lbShow();
+    lb.hidden = false; document.body.classList.add("lb-open");
+    requestAnimationFrame(() => lb.classList.add("show")); $("lbClose").focus();
+  }
+  function closePhoto() {
+    if (lb.hidden) return;
+    lb.classList.remove("show"); document.body.classList.remove("lb-open");
+    setTimeout(() => { lb.hidden = true; lbImg.removeAttribute("src"); }, reduce ? 0 : 220);
+    if (lbBack && lbBack.focus) lbBack.focus();
+  }
+  const lbStep = d => { lbIndex = (lbIndex + d + lbItems.length) % lbItems.length; lbShow(); };
+  $("lbClose").addEventListener("click", closePhoto);
+  $("lbPrev").addEventListener("click", () => lbStep(-1));
+  $("lbNext").addEventListener("click", () => lbStep(1));
+  lb.addEventListener("click", e => { if (e.target === lb) closePhoto(); });
+  document.addEventListener("keydown", e => {
+    if (lb.hidden) return;
+    if (e.key === "Escape") { e.preventDefault(); closePhoto(); }
+    else if (e.key === "ArrowLeft") lbStep(-1);
+    else if (e.key === "ArrowRight") lbStep(1);
+  });
+  let lbTouch = null;
+  lb.addEventListener("touchstart", e => { lbTouch = e.touches[0].clientX; }, { passive: true });
+  lb.addEventListener("touchend", e => { if (lbTouch === null) return; const dx = e.changedTouches[0].clientX - lbTouch; lbTouch = null; if (Math.abs(dx) > 40) lbStep(dx < 0 ? 1 : -1); });
+
   const slider = $("homeSlider"), real = [...slider.children], n = real.length;
   const copy = () => real.map(el => { const c = el.cloneNode(true); c.setAttribute("aria-hidden", "true"); c.querySelector("img").alt = ""; c.querySelector("img").loading = "lazy"; return c; });
   slider.prepend(...copy()); slider.append(...copy());
@@ -615,11 +669,23 @@ body.drawer-open { overflow: hidden; }
   let drag = null;
   slider.addEventListener("pointerdown", e => { if (e.pointerType !== "mouse") return; drag = { x: e.clientX, left: slider.scrollLeft, moved: false }; });
   window.addEventListener("pointermove", e => { if (!drag) return; const dx = e.clientX - drag.x; if (Math.abs(dx) > 3) { drag.moved = true; slider.classList.add("dragging"); } slider.scrollLeft = drag.left - dx; });
-  window.addEventListener("pointerup", () => { if (!drag) return; const moved = drag.moved; drag = null; slider.classList.remove("dragging"); if (moved) goSlide(0); });
+  let justDragged = false;
+  window.addEventListener("pointerup", () => { if (!drag) return; const moved = drag.moved; drag = null; slider.classList.remove("dragging"); if (moved) { justDragged = true; setTimeout(() => { justDragged = false; }, 50); goSlide(0); } });
+  const homeItems = real.map(el => () => { const im = el.querySelector("img"); return { src: im.currentSrc || im.src, alt: im.alt }; });
+  slider.addEventListener("click", e => {
+    if (justDragged) return;
+    const sl = e.target.closest(".slide"); if (!sl) return;
+    openPhoto(homeItems, all.indexOf(sl) % n);
+  });
 
   /* ---------- light switch ---------- */
   /* each photo has its own switch: it only lights or dims that photo */
-  document.querySelectorAll(".shot.pair").forEach(fig => {
+  const figs = [...document.querySelectorAll(".shot.pair")];
+  const galleryItems = figs.map(f => () => {
+    const lit = f.classList.contains("is-on"), base = f.querySelector("img:not(.on)"), im = lit ? f.querySelector("img.on") : base;
+    return { src: im.currentSrc || im.src, alt: base.alt + (lit ? ", lit" : ", unlit") };
+  });
+  figs.forEach(fig => {
     const b = fig.querySelector(".photo-btn");
     const toggle = () => {
       const on = !fig.classList.contains("is-on");
@@ -628,7 +694,7 @@ body.drawer-open { overflow: hidden; }
       b.querySelector("[data-lbl]").textContent = on ? "Turn off" : "Turn on";
     };
     b.addEventListener("click", e => { e.stopPropagation(); toggle(); });
-    fig.addEventListener("click", toggle);
+    fig.addEventListener("click", () => openPhoto(galleryItems, figs.indexOf(fig)));
   });
 
   const gal = $("gallery"), dots = [...$("dots").children];
