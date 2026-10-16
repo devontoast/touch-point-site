@@ -190,10 +190,8 @@ section.details, section.home, section.about, section.press { padding-block: var
 /* At home: full-bleed slider */
 .home-head { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--rule-strong); padding-top: var(--s3); margin-bottom: var(--s4); }
 .slider-ctl { display: flex; align-items: center; gap: var(--s2); }
-.slider-ctl .num { color: var(--ink-2); font-size: var(--t-meta); margin-right: var(--s2); min-width: 4ch; text-align: right; }
 .slider-ctl button { width: 34px; height: 34px; border: 1px solid var(--rule); background: var(--white); color: var(--ink); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
 .slider-ctl button:hover:not(:disabled) { border-color: var(--ink); }
-.slider-ctl button:disabled { opacity: .35; cursor: default; }
 .slider-ctl svg { width: 12px; height: 12px; }
 .home-slider { display: flex; gap: var(--s2); overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; cursor: grab; }
 .home-slider::-webkit-scrollbar { display: none; }
@@ -299,7 +297,6 @@ body.drawer-open { overflow: hidden; }
     <div class="home-head">
       <span class="dot" id="homeTitle">At home</span>
       <div class="slider-ctl">
-        <span class="num" id="homeCount" aria-live="polite">1 / 10</span>
         <button type="button" id="homePrev" aria-label="Previous photo"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M7.5 2.5 4 6l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></button>
         <button type="button" id="homeNext" aria-label="Next photo"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5 8 6 4.5 9.5" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></button>
       </div>
@@ -580,25 +577,34 @@ body.drawer-open { overflow: hidden; }
     }, { threshold: 0.35 }).observe($("top"));
   }
 
-  /* ---------- At home slider ---------- */
-  const slider = $("homeSlider"), slides = [...slider.children];
-  const slideAt = () => { const x = slider.scrollLeft; let best = 0; slides.forEach((sl, i) => { if (Math.abs(sl.offsetLeft - slider.offsetLeft - x) < Math.abs(slides[best].offsetLeft - slider.offsetLeft - x)) best = i; }); return best; };
-  const syncSlider = () => {
-    const i = slideAt(), atEnd = slider.scrollLeft + slider.clientWidth >= slider.scrollWidth - 2;
-    $("homeCount").textContent = (atEnd ? slides.length : i + 1) + " / " + slides.length;
-    $("homePrev").disabled = slider.scrollLeft <= 2; $("homeNext").disabled = atEnd;
+  /* ---------- At home slider: loops forever in both directions ----------
+     The slides are copied once before and once after the real set; whenever scrolling settles in a copy,
+     the slider jumps by one set width to the same picture in the middle set, so the edge is never reached. */
+  const slider = $("homeSlider"), real = [...slider.children], n = real.length;
+  const copy = () => real.map(el => { const c = el.cloneNode(true); c.setAttribute("aria-hidden", "true"); c.querySelector("img").alt = ""; c.querySelector("img").loading = "lazy"; return c; });
+  slider.prepend(...copy()); slider.append(...copy());
+  const all = [...slider.children], narrow = window.matchMedia("(max-width: 760px)");
+  const snapX = el => el.offsetLeft - slider.offsetLeft - (narrow.matches ? (slider.clientWidth - el.offsetWidth) / 2 : 0);
+  const setWidth = () => all[n].offsetLeft - all[0].offsetLeft;
+  const nearest = () => { let best = 0, d = Infinity; all.forEach((el, i) => { const k = Math.abs(snapX(el) - slider.scrollLeft); if (k < d) { d = k; best = i; } }); return best; };
+  const jump = x => { slider.style.scrollSnapType = "none"; slider.scrollLeft = x; requestAnimationFrame(() => { slider.style.scrollSnapType = ""; }); };
+  const wrap = () => {
+    const W = setWidth(), x = slider.scrollLeft, mid = snapX(all[n]);
+    if (x < mid - W / 2) jump(x + W); else if (x > mid + W / 2) jump(x - W);
   };
-  const goSlide = d => { const i = Math.max(0, Math.min(slides.length - 1, slideAt() + d)); slider.scrollTo({ left: slides[i].offsetLeft - slider.offsetLeft, behavior: reduce ? "auto" : "smooth" }); };
+  let idle;
+  slider.addEventListener("scroll", () => { clearTimeout(idle); idle = setTimeout(() => { if (!drag) wrap(); }, 140); }, { passive: true });
+  const goSlide = d => { const i = Math.max(0, Math.min(all.length - 1, nearest() + d)); slider.scrollTo({ left: snapX(all[i]), behavior: reduce ? "auto" : "smooth" }); };
   $("homePrev").addEventListener("click", () => goSlide(-1));
   $("homeNext").addEventListener("click", () => goSlide(1));
-  slider.addEventListener("scroll", () => requestAnimationFrame(syncSlider), { passive: true });
-  window.addEventListener("resize", syncSlider);
+  const home = () => jump(snapX(all[n]));
+  window.addEventListener("load", home); window.addEventListener("resize", () => { const i = nearest() % n; jump(snapX(all[n + i])); });
+  home();
   /* drag with a mouse on desktop; touch scrolling is native */
   let drag = null;
   slider.addEventListener("pointerdown", e => { if (e.pointerType !== "mouse") return; drag = { x: e.clientX, left: slider.scrollLeft, moved: false }; });
   window.addEventListener("pointermove", e => { if (!drag) return; const dx = e.clientX - drag.x; if (Math.abs(dx) > 3) { drag.moved = true; slider.classList.add("dragging"); } slider.scrollLeft = drag.left - dx; });
   window.addEventListener("pointerup", () => { if (!drag) return; const moved = drag.moved; drag = null; slider.classList.remove("dragging"); if (moved) goSlide(0); });
-  syncSlider();
 
   /* ---------- light switch ---------- */
   /* each photo has its own switch: it only lights or dims that photo */
