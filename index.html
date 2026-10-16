@@ -278,7 +278,16 @@ body.drawer-open { overflow: hidden; }
 /* full-screen photo view */
 .lb { position: fixed; inset: 0; z-index: 40; background: var(--film-bg); display: flex; align-items: center; justify-content: center; padding: calc(56px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(56px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); opacity: 0; transition: opacity 220ms var(--ease); }
 .lb.show { opacity: 1; }
-.lb img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display: block; user-select: none; -webkit-user-drag: none; }
+/* the stage is sized to the photo (largest that fits), so the light switch sits on the photo's corner as it does in the gallery */
+.lb-stage { position: relative; --ar: 0.8; aspect-ratio: var(--ar); width: min(100%, calc((100svh - 112px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) * var(--ar))); }
+.lb-stage img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; user-select: none; -webkit-user-drag: none; }
+.lb-stage .on { opacity: 0; transition: opacity var(--fade) var(--ease); }
+.lb-stage.is-on .on { opacity: 1; }
+.lb-stage.no-fade .on, .lb-stage.no-fade .bulb { transition: none; }
+.lb-stage:not(.pair) .on { display: none; }
+.lb .lb-switch { width: auto; height: 40px; left: var(--s3); top: var(--s3); background: rgba(255,255,255,.2); color: var(--ink); }
+.lb .lb-switch:hover { background: rgba(255,255,255,.4); }
+.lb-stage.is-on .lb-switch .bulb { background: var(--cord); box-shadow: 0 0 0 3px rgba(254,185,47,.28); }
 .lb button { position: absolute; width: 44px; height: 44px; border: 0; background: none; color: var(--on-film); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
 .lb button svg { width: 18px; height: 18px; }
 .lb .lb-close { top: calc(8px + env(safe-area-inset-top, 0px)); right: max(8px, env(safe-area-inset-right, 0px)); }
@@ -480,7 +489,11 @@ body.lb-open { overflow: hidden; }
 
 <div class="toast" id="toast" hidden role="status"></div>
 <div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="Photo">
-  <img id="lbImg" alt="">
+  <div class="lb-stage" id="lbStage">
+    <img id="lbImg" alt="">
+    <img class="on" id="lbOn" alt="" aria-hidden="true">
+    <button class="photo-btn lb-switch" id="lbSwitch" type="button" role="switch" aria-checked="true" hidden><span class="bulb" aria-hidden="true"></span><span data-lbl>Turn off</span></button>
+  </div>
   <button class="lb-close" id="lbClose" type="button" aria-label="Close photo"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M1.5 1.5l11 11M12.5 1.5l-11 11" stroke="currentColor" stroke-width="1.2"/></svg></button>
   <button class="lb-prev" id="lbPrev" type="button" aria-label="Previous photo"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M7.5 2.5 4 6l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></button>
   <button class="lb-next" id="lbNext" type="button" aria-label="Next photo"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5 8 6 4.5 9.5" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></button>
@@ -597,10 +610,23 @@ body.lb-open { overflow: hidden; }
      The slides are copied once before and once after the real set; whenever scrolling settles in a copy,
      the slider jumps by one set width to the same picture in the middle set, so the edge is never reached. */
   /* ---------- full-screen photo view ---------- */
-  const lb = $("lb"), lbImg = $("lbImg");
+  const lb = $("lb"), lbImg = $("lbImg"), lbOn = $("lbOn"), lbStage = $("lbStage"), lbSwitch = $("lbSwitch");
   let lbItems = [], lbIndex = 0, lbBack = null;
+  /* product photos carry their on/off pair: the switch here flips the same photo in the gallery, so the two always match */
+  const lbLight = it => {
+    lbStage.classList.toggle("is-on", it.lit);
+    lbSwitch.setAttribute("aria-checked", it.lit);
+    lbSwitch.querySelector("[data-lbl]").textContent = it.lit ? "Turn off" : "Turn on";
+    lbImg.alt = it.alt;
+  };
   const lbShow = () => {
-    const it = lbItems[lbIndex](); lbImg.src = it.src; lbImg.alt = it.alt;
+    const it = lbItems[lbIndex]();
+    lbStage.classList.add("no-fade");
+    lbStage.style.setProperty("--ar", it.w / it.h);
+    lbImg.src = it.src;
+    lbStage.classList.toggle("pair", !!it.on); lbSwitch.hidden = !it.on;
+    if (it.on) { lbOn.src = it.on; lbLight(it); } else { lbOn.removeAttribute("src"); lbStage.classList.remove("is-on"); lbImg.alt = it.alt; }
+    requestAnimationFrame(() => requestAnimationFrame(() => lbStage.classList.remove("no-fade")));
     $("lbCount").textContent = lbItems.length > 1 ? (lbIndex + 1) + " / " + lbItems.length : "";
     $("lbPrev").hidden = $("lbNext").hidden = lbItems.length < 2;
   };
@@ -612,11 +638,13 @@ body.lb-open { overflow: hidden; }
   function closePhoto() {
     if (lb.hidden) return;
     lb.classList.remove("show"); document.body.classList.remove("lb-open");
-    setTimeout(() => { lb.hidden = true; lbImg.removeAttribute("src"); }, reduce ? 0 : 220);
+    setTimeout(() => { lb.hidden = true; lbImg.removeAttribute("src"); lbOn.removeAttribute("src"); }, reduce ? 0 : 220);
     if (lbBack && lbBack.focus) lbBack.focus();
   }
   const lbStep = d => { lbIndex = (lbIndex + d + lbItems.length) % lbItems.length; lbShow(); };
   $("lbClose").addEventListener("click", closePhoto);
+  lbSwitch.addEventListener("click", e => { e.stopPropagation(); const it = lbItems[lbIndex](); if (!it.toggle) return; it.toggle(); lbLight(lbItems[lbIndex]()); });
+  lbSwitch.addEventListener("touchend", e => e.stopPropagation());
   $("lbPrev").addEventListener("click", () => lbStep(-1));
   $("lbNext").addEventListener("click", () => lbStep(1));
   lb.addEventListener("click", e => { if (e.target === lb) closePhoto(); });
@@ -656,7 +684,7 @@ body.lb-open { overflow: hidden; }
   window.addEventListener("pointermove", e => { if (!drag) return; const dx = e.clientX - drag.x; if (Math.abs(dx) > 3) { drag.moved = true; slider.classList.add("dragging"); } slider.scrollLeft = drag.left - dx; });
   let justDragged = false;
   window.addEventListener("pointerup", () => { if (!drag) return; const moved = drag.moved; drag = null; slider.classList.remove("dragging"); if (moved) { justDragged = true; setTimeout(() => { justDragged = false; }, 50); goSlide(0); } });
-  const homeItems = real.map(el => () => { const im = el.querySelector("img"); return { src: im.currentSrc || im.src, alt: im.alt }; });
+  const homeItems = real.map(el => () => { const im = el.querySelector("img"); return { src: im.currentSrc || im.src, alt: im.alt, w: im.naturalWidth || +im.getAttribute("width"), h: im.naturalHeight || +im.getAttribute("height") }; });
   slider.addEventListener("click", e => {
     if (justDragged) return;
     const sl = e.target.closest(".slide"); if (!sl) return;
@@ -666,9 +694,11 @@ body.lb-open { overflow: hidden; }
   /* ---------- light switch ---------- */
   /* each photo has its own switch: it only lights or dims that photo */
   const figs = [...document.querySelectorAll(".shot.pair")];
+  const toggles = new Map();
   const galleryItems = figs.map(f => () => {
-    const lit = f.classList.contains("is-on"), base = f.querySelector("img:not(.on)"), im = lit ? f.querySelector("img.on") : base;
-    return { src: im.currentSrc || im.src, alt: base.alt + (lit ? ", lit" : ", unlit") };
+    const lit = f.classList.contains("is-on"), base = f.querySelector("img:not(.on)"), onImg = f.querySelector("img.on");
+    return { src: base.currentSrc || base.src, on: onImg.currentSrc || onImg.src, lit, w: +base.getAttribute("width") || 1600, h: +base.getAttribute("height") || 2000,
+      alt: base.alt + (lit ? ", lit" : ", unlit"), toggle: toggles.get(f) };
   });
   figs.forEach(fig => {
     const b = fig.querySelector(".photo-btn");
@@ -678,6 +708,7 @@ body.lb-open { overflow: hidden; }
       b.setAttribute("aria-checked", on);
       b.querySelector("[data-lbl]").textContent = on ? "Turn off" : "Turn on";
     };
+    toggles.set(fig, toggle);
     b.addEventListener("click", e => { e.stopPropagation(); toggle(); });
     fig.addEventListener("click", () => openPhoto(galleryItems, figs.indexOf(fig)));
   });
