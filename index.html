@@ -133,6 +133,8 @@ section.details, section.home, section.about, section.press { padding-block: var
 .shot.land { aspect-ratio: 1600 / 1306; }
 .shot.land32 { aspect-ratio: 3 / 2; }
 .shot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; user-select: none; -webkit-user-drag: none; }
+.gallery .shot { aspect-ratio: 4 / 5; }
+.shot.low img { object-position: 50% 90%; }
 .shot.pair { cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .shot .on { opacity: 0; transition: opacity var(--fade) var(--ease); }
 .is-on .shot .on { opacity: 1; }
@@ -143,7 +145,6 @@ section.details, section.home, section.about, section.press { padding-block: var
   .gallery { flex-direction: row; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
   .gallery::-webkit-scrollbar { display: none; }
   .gallery .shot { flex: 0 0 86%; scroll-snap-align: center; }
-  .gallery .shot.wide { aspect-ratio: 2 / 3; }
   .dots { display: flex; }
 }
 
@@ -268,7 +269,7 @@ footer { border-top: 1px solid var(--rule-strong); padding-block: var(--s7) calc
             <img class="on" src="img/touch-point-room-orig_on.jpg" width="1600" height="2400" alt="" aria-hidden="true">
             <button class="photo-btn" type="button" role="switch" aria-checked="true"><span class="bulb" aria-hidden="true"></span><span data-lbl>Turn it off</span></button>
           </figure>
-          <figure class="shot pair">
+          <figure class="shot pair low">
             <img src="img/touch-point_off.jpg" width="1600" height="2400" alt="Touch Point Sconce on a white wall with the puck and yellow cord" loading="lazy">
             <img class="on" src="img/touch-point_on.jpg" width="1600" height="2400" alt="" aria-hidden="true" loading="lazy">
             <button class="photo-btn" type="button" role="switch" aria-checked="true"><span class="bulb" aria-hidden="true"></span><span data-lbl>Turn it off</span></button>
