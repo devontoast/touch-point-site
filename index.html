@@ -87,16 +87,6 @@ p { margin: 0; }
 .wm svg { display: block; width: 100%; height: auto; }
 .dot::before, .preorder::before { content: ""; display: inline-block; width: var(--dot); height: var(--dot); border-radius: 50%; background: var(--ink); margin-right: var(--s2); vertical-align: 1px; flex: none; }
 
-/* ---------- top bar ---------- */
-.bar {
-  position: absolute; top: 0; left: 0; right: 0; z-index: 5; color: var(--on-film);
-  padding: calc(var(--s5) + env(safe-area-inset-top, 0px)) var(--gr) 0 var(--gl);
-  display: flex; justify-content: flex-end; align-items: flex-start;
-}
-.bar nav { display: flex; gap: var(--s5); }
-.bar nav a { font: 400 11px var(--f-nav); letter-spacing: .16em; text-transform: uppercase; white-space: nowrap; }
-@media (max-width: 560px) { .bar nav .wide-only { display: none; } }
-
 /* ---------- hero film ---------- */
 .hero { position: relative; height: min(100svh, 177.78vw); min-height: min(520px, 177.78vw); overflow: hidden; background: var(--film-bg); color: var(--on-film); }
 .hero video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -133,6 +123,7 @@ section.details, section.home, section.about, section.press { padding-block: var
 .shot.land { aspect-ratio: 1600 / 1306; }
 .shot.land32 { aspect-ratio: 3 / 2; }
 .shot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; user-select: none; -webkit-user-drag: none; }
+.gallery .shot { aspect-ratio: 4 / 5; }
 .shot.pair { cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .shot .on { opacity: 0; transition: opacity var(--fade) var(--ease); }
 .is-on .shot .on { opacity: 1; }
@@ -143,7 +134,6 @@ section.details, section.home, section.about, section.press { padding-block: var
   .gallery { flex-direction: row; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
   .gallery::-webkit-scrollbar { display: none; }
   .gallery .shot { flex: 0 0 86%; scroll-snap-align: center; }
-  .gallery .shot.wide { aspect-ratio: 2 / 3; }
   .dots { display: flex; }
 }
 
@@ -228,6 +218,42 @@ footer { border-top: 1px solid var(--rule-strong); padding-block: var(--s7) calc
 .signup button:hover { background: var(--ink-hover); }
 .signup #signupMsg { min-height: 1.6em; }
 
+/* ---------- cart: floating button + drawer ---------- */
+.cart-fab { position: fixed; z-index: 20; top: calc(var(--s4) + env(safe-area-inset-top, 0px)); right: var(--gr); display: inline-flex; align-items: center; gap: var(--s2); height: 44px; padding: 0 var(--s3) 0 var(--s4); border: 0; border-radius: 22px; background: var(--white); color: var(--ink); font: 400 var(--t-body) var(--f-text); cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,.14); }
+.cart-fab:hover { background: #FAFAFA; }
+.cart-fab svg { width: 18px; height: 18px; display: block; }
+.cart-fab .count { min-width: 22px; height: 22px; border-radius: 11px; background: var(--ink); color: var(--white); font-size: 12px; line-height: 22px; text-align: center; padding: 0 6px; font-variant-numeric: tabular-nums; }
+.drawer-scrim { position: fixed; inset: 0; z-index: 30; background: var(--scrim); opacity: 0; pointer-events: none; transition: opacity 320ms var(--ease); }
+.drawer { position: fixed; z-index: 31; top: 0; right: 0; bottom: 0; width: min(420px, 100%); background: var(--white); color: var(--ink); display: flex; flex-direction: column; border-left: 1px solid var(--rule-strong); transform: translateX(100%); visibility: hidden; transition: transform 380ms var(--ease), visibility 0s linear 380ms; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.drawer-open .drawer { transform: none; visibility: visible; transition: transform 380ms var(--ease); }
+.drawer-open .drawer-scrim { opacity: 1; pointer-events: auto; }
+body.drawer-open { overflow: hidden; }
+@media (max-width: 420px) { .drawer { border-left: 0; } }
+.drawer-head { display: flex; justify-content: space-between; align-items: center; padding: var(--s3) var(--s3) var(--s3) var(--s5); border-bottom: 1px solid var(--rule-strong); }
+.drawer-head h2 { margin: 0; font-size: var(--t-item); font-weight: 400; }
+.drawer-close { width: 44px; height: 44px; border: 0; background: none; color: var(--ink); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.drawer-close svg { width: 14px; height: 14px; }
+.drawer-body { flex: 1; overflow-y: auto; padding: 0 var(--s5); }
+.line { display: grid; grid-template-columns: 72px minmax(0, 1fr) auto; gap: var(--s4); padding-block: var(--s4); border-bottom: 1px solid var(--rule); align-items: start; }
+.line img { width: 72px; aspect-ratio: 4 / 5; object-fit: cover; background: var(--tile); display: block; }
+.line .info { display: flex; flex-direction: column; gap: var(--s2); min-width: 0; }
+.line .name { font-size: var(--t-body); }
+.line .each { color: var(--ink-2); font-size: var(--t-meta); }
+.line .ctl { display: flex; align-items: center; gap: var(--s4); }
+.line .qty button { width: 34px; height: 34px; font-size: var(--t-body); }
+.line .remove { border: 0; background: none; padding: 0; color: var(--ink-2); font: 400 var(--t-meta) var(--f-text); cursor: pointer; }
+.line .remove:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.line .amt { font-size: var(--t-body); white-space: nowrap; }
+.line.busy { opacity: .5; pointer-events: none; }
+.drawer-empty { padding-block: var(--s6); display: flex; flex-direction: column; gap: var(--s3); align-items: flex-start; }
+.drawer-empty button { border: 0; background: none; padding: 0; color: var(--ink); font: 400 var(--t-body) var(--f-text); cursor: pointer; }
+.drawer-foot { padding: var(--s4) var(--s5) var(--s5); border-top: 1px solid var(--rule-strong); display: flex; flex-direction: column; gap: var(--s3); }
+.drawer-foot .subtotal { display: flex; justify-content: space-between; font-size: var(--t-item); }
+.drawer-foot .note { color: var(--ink-2); font-size: var(--t-meta); }
+.drawer-foot .checkout { height: 50px; background: var(--ink); color: var(--white); display: flex; align-items: center; justify-content: center; font-size: var(--t-body); }
+.drawer-foot .checkout:hover { background: var(--ink-hover); text-decoration: none; }
+@media (prefers-reduced-motion: reduce) { .drawer, .drawer-open .drawer, .drawer-scrim { transition: none; } }
+
 .toast { position: fixed; z-index: 10; left: 50%; transform: translateX(-50%); bottom: calc(var(--s5) + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--white); font-size: var(--t-meta); padding: var(--s3) var(--s4); max-width: calc(100% - 32px); text-align: center; }
 
 @media (prefers-reduced-motion: reduce) { .shot .on, .photo-btn .bulb { transition-duration: 1ms; } }
@@ -236,17 +262,6 @@ footer { border-top: 1px solid var(--rule-strong); padding-block: var(--s7) calc
 </head>
 <body>
 
-
-<header class="bar">
-  <nav aria-label="Main">
-    <a href="#product">Shop</a>
-    <a href="#details" class="wide-only">Details</a>
-    <a href="#home" class="wide-only">At home</a>
-    <a href="#about" class="wide-only">About</a>
-    <a href="#press" class="wide-only">Press</a>
-    <a href="#product" id="cartLink">Cart (0)</a>
-  </nav>
-</header>
 
 <section class="hero" id="top" aria-label="Touch Point film">
   <video id="film" autoplay muted loop playsinline preload="auto" aria-hidden="true"
@@ -264,17 +279,22 @@ footer { border-top: 1px solid var(--rule-strong); padding-block: var(--s7) calc
       <div>
         <div class="gallery" id="gallery">
           <figure class="shot pair">
-            <img src="img/touch-point-room_off.jpg" width="1600" height="2400" alt="Touch Point Sconce above a chair and a stack of books in afternoon light">
-            <img class="on" src="img/touch-point-room-orig_on.jpg" width="1600" height="2400" alt="" aria-hidden="true">
+            <img src="img/tp-hand_off.jpg" width="1600" height="2000" alt="Touch Point Sconce on a white wall, the puck hanging from its yellow cord">
+            <img class="on" src="img/tp-hand_on.jpg" width="1600" height="2000" alt="" aria-hidden="true">
             <button class="photo-btn" type="button" role="switch" aria-checked="true"><span class="bulb" aria-hidden="true"></span><span data-lbl>Turn it off</span></button>
           </figure>
           <figure class="shot pair">
-            <img src="img/touch-point_off.jpg" width="1600" height="2400" alt="Touch Point Sconce on a white wall with the puck and yellow cord" loading="lazy">
-            <img class="on" src="img/touch-point_on.jpg" width="1600" height="2400" alt="" aria-hidden="true" loading="lazy">
+            <img src="img/tp-room_off.jpg" width="1600" height="2000" alt="Touch Point above a chair and a stack of books in afternoon light" loading="lazy">
+            <img class="on" src="img/tp-room_on.jpg" width="1600" height="2000" alt="" aria-hidden="true" loading="lazy">
+            <button class="photo-btn" type="button" role="switch" aria-checked="true"><span class="bulb" aria-hidden="true"></span><span data-lbl>Turn it off</span></button>
+          </figure>
+          <figure class="shot pair">
+            <img src="img/tp-detail_off.jpg" width="1600" height="2000" alt="Close-up of the shade, the indent where the puck docks and the yellow cord" loading="lazy">
+            <img class="on" src="img/tp-detail_on.jpg" width="1600" height="2000" alt="" aria-hidden="true" loading="lazy">
             <button class="photo-btn" type="button" role="switch" aria-checked="true"><span class="bulb" aria-hidden="true"></span><span data-lbl>Turn it off</span></button>
           </figure>
         </div>
-        <div class="dots" id="dots" aria-hidden="true"><span class="cur"></span><span></span></div>
+        <div class="dots" id="dots" aria-hidden="true"><span class="cur"></span><span></span><span></span></div>
       </div>
 
       <div class="buy">
@@ -421,6 +441,24 @@ footer { border-top: 1px solid var(--rule-strong); padding-block: var(--s7) calc
 
 <div class="toast" id="toast" hidden role="status"></div>
 
+<button class="cart-fab" id="cartFab" type="button" hidden aria-haspopup="dialog" aria-controls="drawer">
+  <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M3.5 6h11l-.9 9.5h-9.2z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M6.5 6V4.8a2.5 2.5 0 0 1 5 0V6" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+  <span>Cart</span><span class="count" id="cartCount">0</span>
+</button>
+<div class="drawer-scrim" id="drawerScrim"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
+  <div class="drawer-head">
+    <h2 id="drawerTitle">Cart</h2>
+    <button class="drawer-close" id="drawerClose" type="button" aria-label="Close cart"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M1.5 1.5l11 11M12.5 1.5l-11 11" stroke="currentColor" stroke-width="1.2"/></svg></button>
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+  <div class="drawer-foot" id="drawerFoot" hidden>
+    <div class="subtotal"><span>Subtotal</span><span class="num" id="cartSubtotal"></span></div>
+    <p class="note">Shipping and taxes are calculated at checkout. Orders ship starting early November 2026.</p>
+    <a class="checkout" id="checkoutLink" href="#">Check out</a>
+  </div>
+</aside>
+
 <script>
 (() => {
   const $ = id => document.getElementById(id);
@@ -556,34 +594,109 @@ footer { border-top: 1px solid var(--rule-strong); padding-block: var(--s7) calc
   }
   loadPrice();
 
-  /* ---------- cart ---------- */
+  /* ---------- cart: Shopify cart, a drawer that opens on add, and a floating button while it holds items ---------- */
   const CART_KEY = "tp-cart";
   const readCart = () => { try { return JSON.parse(localStorage.getItem(CART_KEY) || "null"); } catch (e) { return null; } };
-  const saveCart = c => { try { localStorage.setItem(CART_KEY, JSON.stringify(c)); } catch (e) {} };
-  const CART_FIELDS = "id checkoutUrl totalQuantity";
-  function showCart(c) {
-    const link = $("cartLink");
-    if (c && c.totalQuantity) { link.textContent = "Cart (" + c.totalQuantity + ")"; link.href = c.checkoutUrl; }
-    else { link.textContent = "Cart (0)"; link.href = "#product"; }
+  const saveCart = c => { try { localStorage.setItem(CART_KEY, JSON.stringify(c ? { id: c.id, checkoutUrl: c.checkoutUrl, totalQuantity: c.totalQuantity } : null)); } catch (e) {} };
+  const CART_FIELDS = `id checkoutUrl totalQuantity cost { subtotalAmount { amount currencyCode } }
+    lines(first: 20) { nodes { id quantity cost { totalAmount { amount currencyCode } } merchandise { ... on ProductVariant { id product { title } } } } }`;
+  const fab = $("cartFab"), drawerEl = $("drawer"), drawerBody = $("drawerBody"), drawerFoot = $("drawerFoot");
+  let cart = null, drawerOpen = false, lastFocus = null;
+
+  function renderCart() {
+    const n = cart ? cart.totalQuantity : 0;
+    $("cartCount").textContent = n;
+    fab.setAttribute("aria-label", "Open cart, " + n + (n === 1 ? " item" : " items"));
+    fab.hidden = !n || drawerOpen;
+    const lines = cart && cart.lines ? cart.lines.nodes : [];
+    drawerBody.textContent = "";
+    if (!lines.length) {
+      drawerFoot.hidden = true;
+      const e = document.createElement("div"); e.className = "drawer-empty";
+      const p = document.createElement("p"); p.textContent = "Your cart is empty.";
+      const b = document.createElement("button"); b.type = "button"; b.textContent = "→ Back to Touch Point"; b.addEventListener("click", closeDrawer);
+      e.append(p, b); drawerBody.appendChild(e);
+      return;
+    }
+    lines.forEach(l => {
+      const row = document.createElement("div"); row.className = "line";
+      const img = document.createElement("img"); img.src = "img/tp-thumb.jpg"; img.alt = ""; img.width = 72; img.height = 90;
+      const info = document.createElement("div"); info.className = "info";
+      const name = document.createElement("span"); name.className = "name"; name.textContent = (l.merchandise && l.merchandise.product && l.merchandise.product.title) || "Touch Point Sconce";
+      const each = document.createElement("span"); each.className = "each num";
+      const t = l.cost.totalAmount; each.textContent = fmt(Number(t.amount) / l.quantity, t.currencyCode) + " each";
+      const ctl = document.createElement("div"); ctl.className = "ctl";
+      const q = document.createElement("div"); q.className = "qty"; q.setAttribute("role", "group"); q.setAttribute("aria-label", "Quantity");
+      const minus = document.createElement("button"); minus.type = "button"; minus.textContent = "−"; minus.setAttribute("aria-label", "One fewer");
+      const out = document.createElement("output"); out.className = "num"; out.textContent = l.quantity;
+      const plus = document.createElement("button"); plus.type = "button"; plus.textContent = "+"; plus.setAttribute("aria-label", "One more"); plus.disabled = l.quantity >= 10;
+      q.append(minus, out, plus);
+      const rm = document.createElement("button"); rm.type = "button"; rm.className = "remove"; rm.textContent = "Remove";
+      ctl.append(q, rm); info.append(name, each, ctl);
+      const amt = document.createElement("span"); amt.className = "amt num"; amt.textContent = fmt(t.amount, t.currencyCode);
+      row.append(img, info, amt); drawerBody.appendChild(row);
+      minus.addEventListener("click", () => changeLine(row, l.id, l.quantity - 1));
+      plus.addEventListener("click", () => changeLine(row, l.id, Math.min(10, l.quantity + 1)));
+      rm.addEventListener("click", () => changeLine(row, l.id, 0));
+    });
+    const st = cart.cost.subtotalAmount;
+    $("cartSubtotal").textContent = fmt(st.amount, st.currencyCode);
+    $("checkoutLink").href = cart.checkoutUrl;
+    drawerFoot.hidden = false;
   }
+  function setCart(c) { cart = c; saveCart(c); renderCart(); }
+
+  async function changeLine(row, lineId, quantity) {
+    row.classList.add("busy");
+    try {
+      const d = quantity > 0
+        ? (await sf(`mutation U($id: ID!, $lines: [CartLineUpdateInput!]!) { cartLinesUpdate(cartId: $id, lines: $lines) { cart { ${CART_FIELDS} } userErrors { message } } }`, { id: cart.id, lines: [{ id: lineId, quantity }] })).cartLinesUpdate
+        : (await sf(`mutation R($id: ID!, $ids: [ID!]!) { cartLinesRemove(cartId: $id, lineIds: $ids) { cart { ${CART_FIELDS} } userErrors { message } } }`, { id: cart.id, ids: [lineId] })).cartLinesRemove;
+      if (d.cart) setCart(d.cart); else row.classList.remove("busy");
+    } catch (e) { row.classList.remove("busy"); }
+  }
+
+  const focusables = () => [...drawerEl.querySelectorAll("button:not([disabled]), a[href]")].filter(x => x.offsetParent !== null);
+  function openDrawer() {
+    if (drawerOpen) return;
+    drawerOpen = true; lastFocus = document.activeElement;
+    document.body.classList.add("drawer-open"); renderCart();
+    setTimeout(() => $("drawerClose").focus(), 50);
+  }
+  function closeDrawer() {
+    if (!drawerOpen) return;
+    drawerOpen = false; document.body.classList.remove("drawer-open"); renderCart();
+    const back = !fab.hidden ? fab : lastFocus; if (back && back.focus) back.focus();
+  }
+  fab.addEventListener("click", openDrawer);
+  $("drawerClose").addEventListener("click", closeDrawer);
+  $("drawerScrim").addEventListener("click", closeDrawer);
+  document.addEventListener("keydown", e => {
+    if (!drawerOpen) return;
+    if (e.key === "Escape") { e.preventDefault(); closeDrawer(); return; }
+    if (e.key === "Tab") {
+      const f = focusables(); if (!f.length) return;
+      const first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  });
+
   async function refreshCart() {
-    const c = readCart(); if (!c) return;
+    const c = readCart(); if (!c) { renderCart(); return; }
     try {
       const d = await sf(`query C($id: ID!) { cart(id: $id) { ${CART_FIELDS} } }`, { id: c.id });
-      if (!d.cart) { saveCart(null); showCart(null); return; }
-      saveCart(d.cart); showCart(d.cart);
-    } catch (e) { showCart(c); }
+      setCart(d.cart && d.cart.totalQuantity ? d.cart : (d.cart || null));
+    } catch (e) { renderCart(); }
   }
   refreshCart();
 
   $("qMinus").addEventListener("click", () => { qty = Math.max(1, qty - 1); $("qty").textContent = qty; });
   $("qPlus").addEventListener("click", () => { qty = Math.min(10, qty + 1); $("qty").textContent = qty; });
-  let toastTimer;
-  const toast = t => { const el = $("toast"); el.textContent = t; el.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.hidden = true; }, 2600); };
 
   async function addToCart() {
     const lines = [{ merchandiseId: variantId, quantity: qty }];
-    const existing = readCart();
+    const existing = cart || readCart();
     if (existing) {
       const d = await sf(`mutation A($id: ID!, $lines: [CartLineInput!]!) { cartLinesAdd(cartId: $id, lines: $lines) { cart { ${CART_FIELDS} } userErrors { message } } }`, { id: existing.id, lines });
       const r = d.cartLinesAdd;
@@ -598,12 +711,10 @@ footer { border-top: 1px solid var(--rule-strong); padding-block: var(--s7) calc
   $("addBtn").addEventListener("click", async () => {
     if (!buyable || !variantId) return;
     const btn = $("addBtn"); btn.disabled = true; btn.textContent = "Adding…";
+    $("addNote").textContent = "";
     try {
       const c = await addToCart();
-      saveCart(c); showCart(c);
-      const note = $("addNote"); note.textContent = "Added. ";
-      const a = document.createElement("a"); a.href = c.checkoutUrl; a.textContent = "→ Check out"; note.appendChild(a);
-      toast(qty === 1 ? "Touch Point added to cart" : qty + " Touch Points added to cart");
+      setCart(c); openDrawer();
     } catch (e) {
       $("addNote").textContent = "That didn't go through. Try again, or email hello@touchpointsconce.com.";
     }
