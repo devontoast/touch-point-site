@@ -490,26 +490,19 @@ body.drawer-open { overflow: hidden; }
   const film = $("film");
   /* Portrait screens get the 9:16 cut, framed shot by shot on the sconce; everything else gets the 16:9 film. */
   const tall = window.matchMedia("(max-aspect-ratio: 1/1)");
-  /* Safari only plays an .mp4 when the server answers byte-range requests. To avoid depending on that,
-     the film is fetched whole and played from memory; if that fails, fall back to the file's URL. */
+  /* The film streams straight from its URL (the host answers byte-range requests, which Safari needs),
+     so it starts as soon as the first frames arrive instead of after the whole file has downloaded. */
   film.muted = true; film.playsInline = true;
-  const blobCache = {};
-  const loadFilm = url => blobCache[url] || (blobCache[url] = fetch(url)
-    .then(r => { if (!r.ok) throw new Error(r.status); return r.blob(); })
-    .then(b => URL.createObjectURL(b.type === "video/mp4" ? b : new Blob([b], { type: "video/mp4" })))
-    .catch(() => url));
   let wantKey = "";
-  const pickFilm = async () => {
+  const pickFilm = () => {
     const k = tall.matches ? "tall" : "wide";
     if (wantKey === k) return;
     wantKey = k;
     const t = film.currentTime || 0, wasPaused = film.paused && film.getAttribute("src");
     film.poster = film.dataset[k + "Poster"];
-    const src = await loadFilm(film.dataset[k]);
-    if (wantKey !== k) return;
-    film.src = src;
+    film.src = film.dataset[k];
     if (t) { try { film.currentTime = t; } catch (e) {} }
-    if (!wasPaused && !reduce) startFilm();
+    if (!wasPaused) Promise.resolve().then(() => { if (!reduce) startFilm(); });
   };
   if (tall.addEventListener) tall.addEventListener("change", pickFilm);
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
