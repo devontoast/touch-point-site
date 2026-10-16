@@ -524,12 +524,18 @@ body.drawer-open { overflow: hidden; }
     soundBtn.setAttribute("aria-pressed", String(on));
     soundBtn.setAttribute("aria-label", on ? "Turn sound off" : "Turn sound on");
   };
+  /* iPhones ignore volume changes from a page, so the fade always finishes after a fixed number of steps
+     and the caller's muting still happens there. */
   const fadeTo = (target, done) => {
     clearInterval(fadeTimer);
+    let steps = 0;
     fadeTimer = setInterval(() => {
+      steps++;
       const v = film.volume + (target > film.volume ? 0.1 : -0.1);
-      if (Math.abs(target - film.volume) <= 0.1) { film.volume = target; clearInterval(fadeTimer); if (done) done(); }
-      else film.volume = Math.min(1, Math.max(0, v));
+      if (Math.abs(target - film.volume) <= 0.1 || steps >= 12) {
+        try { film.volume = target; } catch (e) {}
+        clearInterval(fadeTimer); if (done) done();
+      } else { try { film.volume = Math.min(1, Math.max(0, v)); } catch (e) {} }
     }, 40);
   };
   const soundOn = () => {
@@ -552,9 +558,13 @@ body.drawer-open { overflow: hidden; }
   film.addEventListener("playing", () => { playBtn.hidden = true; });
   film.addEventListener("pause", () => setTimeout(showPlay, 300));
   setTimeout(showPlay, 2500); /* if the browser never started it (e.g. iPhone Low Power Mode), offer the button */
+  /* Pressing play is a tap, so the sound comes on with it (unless the visitor muted it with the speaker button). */
   playBtn.addEventListener("click", e => {
     e.stopPropagation();
-    film.play().then(() => { playBtn.hidden = true; }).catch(() => {});
+    unlocked = true;
+    if (wantSound) { clearInterval(fadeTimer); try { film.volume = 1; } catch (err) {} film.muted = false; }
+    film.play().then(() => { playBtn.hidden = true; showSound(); })
+      .catch(() => { film.muted = true; film.play().then(() => { playBtn.hidden = true; }).catch(() => {}); showSound(); });
   });
   const unlock = e => {
     if (unlocked) return;
@@ -570,10 +580,10 @@ body.drawer-open { overflow: hidden; }
   });
   if ("IntersectionObserver" in window) {
     new IntersectionObserver(([e]) => {
-      filmVisible = e.isIntersecting;
+      filmVisible = e.isIntersecting && e.intersectionRatio >= 0.35;
       if (!filmVisible && !film.muted) soundOff();
       else if (filmVisible && unlocked && wantSound && film.muted) soundOn();
-    }, { threshold: 0.35 }).observe($("top"));
+    }, { threshold: [0, 0.35] }).observe($("top"));
   }
 
   /* ---------- At home slider: loops forever in both directions ----------
