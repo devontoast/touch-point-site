@@ -107,7 +107,6 @@ p { margin: 0; }
 
 /* ---------- section frame: label column + content ---------- */
 section.details, section.home, section.about, section.press { padding-block: var(--s5) var(--s9); }
-.hero + section.home { padding-block: var(--s8) 0; }
 .frame { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s4) var(--s7); }
 @media (min-width: 960px) { .frame { grid-template-columns: var(--col-label) minmax(0, 1fr); } }
 .frame > .side { display: flex; flex-direction: column; gap: var(--s2); padding-top: var(--row); border-top: 1px solid var(--rule-strong); }
@@ -292,31 +291,6 @@ body.drawer-open { overflow: hidden; }
   </button>
 </section>
 
-<section class="home" id="home" aria-labelledby="homeTitle">
-  <div class="inner">
-    <div class="home-head">
-      <span class="dot" id="homeTitle">At home</span>
-      <div class="slider-ctl">
-        <button type="button" id="homePrev" aria-label="Previous photo"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M7.5 2.5 4 6l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></button>
-        <button type="button" id="homeNext" aria-label="Next photo"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5 8 6 4.5 9.5" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></button>
-      </div>
-    </div>
-  </div>
-  <!-- Full-bleed slider. Slides marked data-placeholder are frames from the film, to be swapped for photos. -->
-  <div class="home-slider" id="homeSlider" tabindex="0" role="region" aria-label="At home photos">
-    <figure class="slide" style="--fx:50%"><img src="img/insitu-reach.jpg" width="1600" height="1306" alt="A woman in bed reaching toward a lit Touch Point" draggable="false"></figure>
-    <figure class="slide" data-placeholder="film frame" style="--fx:30%"><img src="img/placeholder-film-01.jpg" width="1920" height="1080" alt="A woman sitting up in bed in the morning" draggable="false"></figure>
-    <figure class="slide" data-placeholder="film frame" style="--fx:4%"><img src="img/placeholder-film-02.jpg" width="1920" height="1080" alt="Reaching across the bed for the puck" loading="lazy" draggable="false"></figure>
-    <figure class="slide" style="--fx:50%"><img src="img/insitu-dock.jpg" width="1600" height="1306" alt="A hand docking the puck on a lit Touch Point" loading="lazy" draggable="false"></figure>
-    <figure class="slide" data-placeholder="film frame" style="--fx:62%"><img src="img/placeholder-film-03.jpg" width="1920" height="1080" alt="Fingers bringing the puck to the indent" loading="lazy" draggable="false"></figure>
-    <figure class="slide" data-placeholder="film frame" style="--fx:36%"><img src="img/placeholder-film-04.jpg" width="1920" height="1080" alt="The puck docked and the light at full brightness" loading="lazy" draggable="false"></figure>
-    <figure class="slide" data-placeholder="film frame" style="--fx:44%"><img src="img/placeholder-film-05.jpg" width="1920" height="1080" alt="Touch Point lit on the bedroom wall" loading="lazy" draggable="false"></figure>
-    <figure class="slide" style="--fx:45%"><img src="img/insitu-bedside.jpg" width="1600" height="1306" alt="Touch Point lit above a bedside table, the yellow cord hanging from the puck" loading="lazy" draggable="false"></figure>
-    <figure class="slide" data-placeholder="film frame" style="--fx:42%"><img src="img/placeholder-film-06.jpg" width="1920" height="1080" alt="The bedroom seen through the window, the sconce glowing" loading="lazy" draggable="false"></figure>
-    <figure class="slide" data-placeholder="film frame" style="--fx:35%"><img src="img/placeholder-film-07.jpg" width="1920" height="1080" alt="The empty room at dusk with Touch Point left on" loading="lazy" draggable="false"></figure>
-  </div>
-</section>
-
 <section class="product" id="product" aria-labelledby="pName">
   <div class="inner">
     <div class="product-grid" id="lightScope">
@@ -415,6 +389,31 @@ body.drawer-open { overflow: hidden; }
         </details>
       </div>
     </div>
+  </div>
+</section>
+
+<section class="home" id="home" aria-labelledby="homeTitle">
+  <div class="inner">
+    <div class="home-head">
+      <span class="dot" id="homeTitle">At home</span>
+      <div class="slider-ctl">
+        <button type="button" id="homePrev" aria-label="Previous photo"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M7.5 2.5 4 6l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></button>
+        <button type="button" id="homeNext" aria-label="Next photo"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5 8 6 4.5 9.5" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></button>
+      </div>
+    </div>
+  </div>
+  <!-- Full-bleed slider. Slides marked data-placeholder are frames from the film, to be swapped for photos. -->
+  <div class="home-slider" id="homeSlider" tabindex="0" role="region" aria-label="At home photos">
+    <figure class="slide" style="--fx:50%"><img src="img/insitu-reach.jpg" width="1600" height="1306" alt="A woman in bed reaching toward a lit Touch Point" draggable="false"></figure>
+    <figure class="slide" data-placeholder="film frame" style="--fx:30%"><img src="img/placeholder-film-01.jpg" width="1920" height="1080" alt="A woman sitting up in bed in the morning" draggable="false"></figure>
+    <figure class="slide" data-placeholder="film frame" style="--fx:4%"><img src="img/placeholder-film-02.jpg" width="1920" height="1080" alt="Reaching across the bed for the puck" loading="lazy" draggable="false"></figure>
+    <figure class="slide" style="--fx:50%"><img src="img/insitu-dock.jpg" width="1600" height="1306" alt="A hand docking the puck on a lit Touch Point" loading="lazy" draggable="false"></figure>
+    <figure class="slide" data-placeholder="film frame" style="--fx:62%"><img src="img/placeholder-film-03.jpg" width="1920" height="1080" alt="Fingers bringing the puck to the indent" loading="lazy" draggable="false"></figure>
+    <figure class="slide" data-placeholder="film frame" style="--fx:36%"><img src="img/placeholder-film-04.jpg" width="1920" height="1080" alt="The puck docked and the light at full brightness" loading="lazy" draggable="false"></figure>
+    <figure class="slide" data-placeholder="film frame" style="--fx:44%"><img src="img/placeholder-film-05.jpg" width="1920" height="1080" alt="Touch Point lit on the bedroom wall" loading="lazy" draggable="false"></figure>
+    <figure class="slide" style="--fx:45%"><img src="img/insitu-bedside.jpg" width="1600" height="1306" alt="Touch Point lit above a bedside table, the yellow cord hanging from the puck" loading="lazy" draggable="false"></figure>
+    <figure class="slide" data-placeholder="film frame" style="--fx:42%"><img src="img/placeholder-film-06.jpg" width="1920" height="1080" alt="The bedroom seen through the window, the sconce glowing" loading="lazy" draggable="false"></figure>
+    <figure class="slide" data-placeholder="film frame" style="--fx:35%"><img src="img/placeholder-film-07.jpg" width="1920" height="1080" alt="The empty room at dusk with Touch Point left on" loading="lazy" draggable="false"></figure>
   </div>
 </section>
 
