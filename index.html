@@ -126,7 +126,7 @@ section.details, section.home, section.about, section.press { padding-block: var
 .gallery .shot { aspect-ratio: 4 / 5; }
 .shot.pair { cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .shot .on { opacity: 0; transition: opacity var(--fade) var(--ease); }
-.is-on .shot .on { opacity: 1; }
+.shot.pair.is-on .on { opacity: 1; }
 .dots { display: none; justify-content: center; gap: var(--s2); padding-top: var(--s3); }
 .dots span { width: var(--dot); height: var(--dot); border-radius: 50%; background: var(--rule); }
 .dots span.cur { background: var(--ink); }
@@ -150,7 +150,7 @@ section.details, section.home, section.about, section.press { padding-block: var
 .photo-btn { position: absolute; left: var(--s4); top: var(--s4); z-index: 2; display: inline-flex; align-items: center; gap: var(--s2); height: 44px; padding: 0 var(--s4) 0 var(--s3); border: 0; border-radius: 22px; background: var(--white); color: var(--ink); font: 400 var(--t-body) var(--f-text); cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,.14); }
 .photo-btn:hover { background: #FAFAFA; }
 .photo-btn .bulb { width: 12px; height: 12px; border-radius: 50%; background: var(--rule); box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); transition: background-color var(--fade) var(--ease), box-shadow var(--fade) var(--ease); }
-.is-on .photo-btn .bulb { background: var(--cord); box-shadow: 0 0 0 4px rgba(254,185,47,.28); }
+.shot.pair.is-on .photo-btn .bulb { background: var(--cord); box-shadow: 0 0 0 4px rgba(254,185,47,.28); }
 
 .cartrow { display: flex; gap: var(--s2); align-items: stretch; justify-content: flex-start; }
 .qty { display: inline-flex; align-items: center; border: 1px solid var(--ink); }
@@ -233,6 +233,8 @@ body.drawer-open { overflow: hidden; }
 .drawer-head h2 { margin: 0; font-size: var(--t-item); font-weight: 400; }
 .drawer-close { width: 44px; height: 44px; border: 0; background: none; color: var(--ink); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
 .drawer-close svg { width: 14px; height: 14px; }
+.drawer-added { display: flex; align-items: center; gap: var(--s2); margin: 0; padding: var(--s3) var(--s5); background: var(--cord-wash); color: var(--cord-ink); font-size: var(--t-meta); }
+.drawer-added svg { width: 12px; height: 12px; flex: none; }
 .drawer-body { flex: 1; overflow-y: auto; padding: 0 var(--s5); }
 .line { display: grid; grid-template-columns: 72px minmax(0, 1fr) auto; gap: var(--s4); padding-block: var(--s4); border-bottom: 1px solid var(--rule); align-items: start; }
 .line img { width: 72px; aspect-ratio: 4 / 5; object-fit: cover; background: var(--tile); display: block; }
@@ -275,20 +277,20 @@ body.drawer-open { overflow: hidden; }
 
 <section class="product" id="product" aria-labelledby="pName">
   <div class="inner">
-    <div class="product-grid is-on" id="lightScope">
+    <div class="product-grid" id="lightScope">
       <div>
         <div class="gallery" id="gallery">
-          <figure class="shot pair">
+          <figure class="shot pair is-on">
             <img src="img/tp-hand_off.jpg" width="1600" height="2000" alt="Touch Point Sconce on a white wall, the puck hanging from its yellow cord">
             <img class="on" src="img/tp-hand_on.jpg" width="1600" height="2000" alt="" aria-hidden="true">
             <button class="photo-btn" type="button" role="switch" aria-checked="true"><span class="bulb" aria-hidden="true"></span><span data-lbl>Turn it off</span></button>
           </figure>
-          <figure class="shot pair">
+          <figure class="shot pair is-on">
             <img src="img/tp-room_off.jpg" width="1600" height="2000" alt="Touch Point above a chair and a stack of books in afternoon light" loading="lazy">
             <img class="on" src="img/tp-room_on.jpg" width="1600" height="2000" alt="" aria-hidden="true" loading="lazy">
             <button class="photo-btn" type="button" role="switch" aria-checked="true"><span class="bulb" aria-hidden="true"></span><span data-lbl>Turn it off</span></button>
           </figure>
-          <figure class="shot pair">
+          <figure class="shot pair is-on">
             <img src="img/tp-detail_off.jpg" width="1600" height="2000" alt="Close-up of the shade, the indent where the puck docks and the yellow cord" loading="lazy">
             <img class="on" src="img/tp-detail_on.jpg" width="1600" height="2000" alt="" aria-hidden="true" loading="lazy">
             <button class="photo-btn" type="button" role="switch" aria-checked="true"><span class="bulb" aria-hidden="true"></span><span data-lbl>Turn it off</span></button>
@@ -334,17 +336,14 @@ body.drawer-open { overflow: hidden; }
           <summary>Specifications</summary>
           <div class="body wide">
             <dl class="spec-list">
-              <div><dt class="label">Dimensions</dt><dd>10 × 10 × 3 in <span class="u">/ 25.4 × 25.4 × 7.6 cm</span></dd></div>
+              <div><dt class="label">Dimensions</dt><dd>10 × 10 × 3 in docked <span class="u">/ 25.4 × 25.4 × 7.6 cm</span><br>10 × 20 × 3 in with the puck hanging <span class="u">/ 25.4 × 50.8 × 7.6 cm</span></dd></div>
               <div><dt class="label">Weight</dt><dd>2 lb <span class="u">/ 0.9 kg</span></dd></div>
-              <div><dt class="label">Materials</dt><dd>3D-printed matte PLA body and puck, acrylic diffuser, paracord tether, embedded magnet</dd></div>
+              <div><dt class="label">Materials</dt><dd>3D-printed matte PLA body and puck, acrylic diffuser, braided nylon paracord, embedded magnet</dd></div>
               <div><dt class="label">Light source</dt><dd>Integrated warm-white LED, 3000 K</dd></div>
-              <div><dt class="label">Control</dt><dd>Magnetic puck on a paracord tether. The light starts to rise about 3–5 in from the dock, holds at whatever level you leave it, stays at full brightness when docked, and fades out when the puck is pulled away.</dd></div>
+              <div><dt class="label">Control</dt><dd>Light brightens in response to the proximity of the puck as you turn it on. Remains at full brightness when docked. Fades out gently when the puck is pulled away.</dd></div>
               <div><dt class="label">Power</dt><dd>Plug-in, North American 120 V plug</dd></div>
-              <div><dt class="label">Cord</dt><dd>Yellow braided nylon paracord</dd></div>
-              <div><dt class="label">Mounting</dt><dd>Wall mounted, hardware included</dd></div>
               <div><dt class="label">Made in</dt><dd>Toronto, Canada, in small batches</dd></div>
               <div><dt class="label">Designers</dt><dd>Mark Khoury and Devansh Shah</dd></div>
-              <div><dt class="label">Warranty</dt><dd>2 years from delivery</dd></div>
             </dl>
           </div>
         </details>
@@ -451,6 +450,7 @@ body.drawer-open { overflow: hidden; }
     <h2 id="drawerTitle">Cart</h2>
     <button class="drawer-close" id="drawerClose" type="button" aria-label="Close cart"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M1.5 1.5l11 11M12.5 1.5l-11 11" stroke="currentColor" stroke-width="1.2"/></svg></button>
   </div>
+  <p class="drawer-added" id="drawerAdded" role="status" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6.4 4.8 9 10 3.2" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="drawerAddedText">Added to your cart</span></p>
   <div class="drawer-body" id="drawerBody"></div>
   <div class="drawer-foot" id="drawerFoot" hidden>
     <div class="subtotal"><span>Subtotal</span><span class="num" id="cartSubtotal"></span></div>
@@ -496,15 +496,18 @@ body.drawer-open { overflow: hidden; }
   $("top").addEventListener("click", e => { if (film.paused && !reduce && !e.target.closest("a")) film.play().catch(() => {}); });
 
   /* ---------- light switch ---------- */
-  const scope = $("lightScope"), lightBtns = [...document.querySelectorAll(".photo-btn")];
-  let lit = true;
-  const setLight = on => {
-    lit = on; scope.classList.toggle("is-on", on);
-    lightBtns.forEach(b => { b.setAttribute("aria-checked", on); b.querySelector("[data-lbl]").textContent = on ? "Turn it off" : "Turn it on"; });
-  };
-  const toggle = () => setLight(!lit);
-  lightBtns.forEach(b => b.addEventListener("click", e => { e.stopPropagation(); toggle(); }));
-  document.querySelectorAll(".shot.pair").forEach(p => p.addEventListener("click", toggle));
+  /* each photo has its own switch: it only lights or dims that photo */
+  document.querySelectorAll(".shot.pair").forEach(fig => {
+    const b = fig.querySelector(".photo-btn");
+    const toggle = () => {
+      const on = !fig.classList.contains("is-on");
+      fig.classList.toggle("is-on", on);
+      b.setAttribute("aria-checked", on);
+      b.querySelector("[data-lbl]").textContent = on ? "Turn it off" : "Turn it on";
+    };
+    b.addEventListener("click", e => { e.stopPropagation(); toggle(); });
+    fig.addEventListener("click", toggle);
+  });
 
   const gal = $("gallery"), dots = [...$("dots").children];
   gal.addEventListener("scroll", () => {
@@ -657,7 +660,9 @@ body.drawer-open { overflow: hidden; }
   }
 
   const focusables = () => [...drawerEl.querySelectorAll("button:not([disabled]), a[href]")].filter(x => x.offsetParent !== null);
-  function openDrawer() {
+  function openDrawer(added) {
+    $("drawerAdded").hidden = !added;
+    if (added) $("drawerAddedText").textContent = added === 1 ? "Touch Point added to your cart" : added + " Touch Points added to your cart";
     if (drawerOpen) return;
     drawerOpen = true; lastFocus = document.activeElement;
     document.body.classList.add("drawer-open"); renderCart();
@@ -668,7 +673,7 @@ body.drawer-open { overflow: hidden; }
     drawerOpen = false; document.body.classList.remove("drawer-open"); renderCart();
     const back = !fab.hidden ? fab : lastFocus; if (back && back.focus) back.focus();
   }
-  fab.addEventListener("click", openDrawer);
+  fab.addEventListener("click", () => openDrawer(0));
   $("drawerClose").addEventListener("click", closeDrawer);
   $("drawerScrim").addEventListener("click", closeDrawer);
   document.addEventListener("keydown", e => {
@@ -714,7 +719,7 @@ body.drawer-open { overflow: hidden; }
     $("addNote").textContent = "";
     try {
       const c = await addToCart();
-      setCart(c); openDrawer();
+      setCart(c); openDrawer(qty);
     } catch (e) {
       $("addNote").textContent = "That didn't go through. Try again, or email hello@touchpointsconce.com.";
     }
