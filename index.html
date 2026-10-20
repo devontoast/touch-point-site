@@ -309,6 +309,26 @@ body.lb-open { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) { .shot .on, .photo-btn .bulb { transition-duration: 1ms; } }
 </style>
 <style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}.add:disabled{opacity:.45;cursor:default}</style>
+<!-- ---------- analytics ----------
+     1. Vercel Web Analytics: page views, referrers, countries, devices. Turn it on in Vercel → touch-point-site → Analytics;
+        until then the script is a harmless 404.
+     2. Meta Pixel: paste the Pixel ID from Meta Events Manager into META_PIXEL_ID. Empty = no Meta code loads at all.
+        The site sends PageView, ViewContent, AddToCart and InitiateCheckout. Purchase comes from Shopify's
+        Facebook & Instagram app on the checkout, connected to this same Pixel. -->
+<script>
+  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+  window.META_PIXEL_ID = "";
+  window.track = function () {};
+  if (window.META_PIXEL_ID) {
+    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;
+    s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', window.META_PIXEL_ID);
+    fbq('track', 'PageView');
+    window.track = function (name, data) { try { fbq('track', name, data || {}); } catch (e) {} };
+  }
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
 
@@ -789,7 +809,9 @@ body.lb-open { overflow: hidden; }
   const FALLBACK = { CA: ["350", "CAD"] };
   function showPrice(amount, cur) {
     $("price").textContent = fmt(amount, cur);
+    $("price").dataset.amount = amount; $("price").dataset.currency = cur;
   }
+  let viewSent = false;
   function setBuyable(ok, label) {
     buyable = ok;
     $("addBtn").disabled = !ok;
@@ -808,11 +830,52 @@ body.lb-open { overflow: hidden; }
       $("price").dataset.live = "1";
       showPrice(v.price.amount, v.price.currencyCode);
       setBuyable(!!v.availableForSale);
+      if (!viewSent) {
+        viewSent = true;
+        window.track("ViewContent", { content_ids: [HANDLE], content_type: "product", value: Number(v.price.amount), currency: v.price.currencyCode });
+      }
     } catch (e) {
       setBuyable(false, "Try again in a moment");
     }
   }
   loadPrice();
+
+  /* ---------- attribution ----------
+     The site and the checkout live on different hosts, so Shopify only sees visitors arriving from this page.
+     Remember the visitor's UTM tags and ad click id (last touch, kept 30 days) plus an outside referrer, and hand them on:
+     appended to the checkout link, so Shopify's reports credit the real source, and saved on the cart, so they show on the order. */
+  const ATTR_KEY = "tp-attr", ATTR_DAYS = 30;
+  const TAGS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "fbclid"];
+  const attribution = (() => {
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(ATTR_KEY) || "null"); } catch (e) {}
+    if (saved && Date.now() - (saved.at || 0) > ATTR_DAYS * 864e5) saved = null;
+    const q = new URLSearchParams(location.search), fresh = {};
+    TAGS.forEach(k => { const v = q.get(k); if (v) fresh[k] = v.slice(0, 200); });
+    let ref = "";
+    try { const r = document.referrer && new URL(document.referrer); if (r && r.hostname !== location.hostname) ref = r.hostname; } catch (e) {}
+    if (Object.keys(fresh).length || (ref && !saved)) {
+      saved = { tags: fresh, referrer: ref, landing: location.pathname + location.search.slice(0, 300), at: Date.now() };
+      try { localStorage.setItem(ATTR_KEY, JSON.stringify(saved)); } catch (e) {}
+    }
+    return saved;
+  })();
+  const withAttribution = url => {
+    if (!url || !attribution) return url;
+    try {
+      const u = new URL(url);
+      Object.entries(attribution.tags || {}).forEach(([k, v]) => { if (!u.searchParams.has(k)) u.searchParams.set(k, v); });
+      if (!u.searchParams.has("utm_source") && attribution.referrer) { u.searchParams.set("utm_source", attribution.referrer); u.searchParams.set("utm_medium", "referral"); }
+      return u.toString();
+    } catch (e) { return url; }
+  };
+  const cartAttributes = () => {
+    if (!attribution) return [];
+    const a = Object.entries(attribution.tags || {}).map(([key, value]) => ({ key, value }));
+    if (attribution.referrer) a.push({ key: "referrer", value: attribution.referrer });
+    if (attribution.landing) a.push({ key: "landing_page", value: attribution.landing });
+    return a;
+  };
 
   /* ---------- cart: Shopify cart, a drawer that opens on add, and a floating button while it holds items ---------- */
   const CART_KEY = "tp-cart";
@@ -860,7 +923,7 @@ body.lb-open { overflow: hidden; }
     });
     const st = cart.cost.subtotalAmount;
     $("cartSubtotal").textContent = fmt(st.amount, st.currencyCode);
-    $("checkoutLink").href = cart.checkoutUrl;
+    $("checkoutLink").href = withAttribution(cart.checkoutUrl);
     drawerFoot.hidden = false;
   }
   function setCart(c) { cart = c; saveCart(c); renderCart(); }
@@ -888,6 +951,12 @@ body.lb-open { overflow: hidden; }
     const back = !fab.hidden ? fab : lastFocus; if (back && back.focus) back.focus();
   }
   fab.addEventListener("click", () => openDrawer(0));
+  $("checkoutLink").addEventListener("click", () => {
+    if (!cart) return;
+    const st = cart.cost.subtotalAmount;
+    window.track("InitiateCheckout", { content_ids: [HANDLE], content_type: "product", num_items: cart.totalQuantity, value: Number(st.amount), currency: st.currencyCode });
+    window.va("event", { name: "checkout_click" });
+  });
   $("drawerClose").addEventListener("click", closeDrawer);
   $("drawerScrim").addEventListener("click", closeDrawer);
   document.addEventListener("keydown", e => {
@@ -922,7 +991,7 @@ body.lb-open { overflow: hidden; }
       if (r.cart && !(r.userErrors || []).length) return r.cart;
     }
     const d = await sf(`mutation N($input: CartInput!) { cartCreate(input: $input) { cart { ${CART_FIELDS} } userErrors { message } } }`,
-      { input: { lines, buyerIdentity: { countryCode: country } } });
+      { input: { lines, buyerIdentity: { countryCode: country }, attributes: cartAttributes() } });
     const r = d.cartCreate;
     if (!r.cart) throw new Error((r.userErrors[0] || {}).message || "Cart error");
     return r.cart;
@@ -934,6 +1003,10 @@ body.lb-open { overflow: hidden; }
     try {
       const c = await addToCart();
       setCart(c); openDrawer(qty);
+      const p = $("price").dataset.amount;
+      window.track("AddToCart", { content_ids: [HANDLE], content_type: "product", num_items: qty,
+        value: p ? Number(p) * qty : undefined, currency: $("price").dataset.currency });
+      window.va("event", { name: "add_to_cart" });
     } catch (e) {
       $("addNote").textContent = "That didn't go through. Try again, or email hello@touchpointsconce.com.";
     }
