@@ -14,6 +14,8 @@ This repo is the live site at https://touchpointsconce.com. Vercel deploys every
 
 ## Shopify (Touch Point store, z1cyje-zy.myshopify.com)
 - Headless storefront "Touch Point site"; its public Storefront token is in `index.html`.
-- Product handle `touch-point-sconce`. Prices come from Shopify markets: $350 CAD everywhere, converted to local currency outside Canada (US market rounds, no fixed USD price). Duties and import taxes outside Canada are paid by the buyer (not collected at checkout).
+- Product handle `touch-point-sconce`. Prices come from Shopify markets: $350 CAD, converted to local currency outside Canada.
+- United States (since Oct 20, 2026): fixed price US$380 on the US price list, with the market set to include duties in the price. That covers the 50% Section 338 tariff on Canadian lighting (HS 9405.11.8010), so US checkout shows no duties line. US orders ship on Canada Post DDP labels through Shopify Shipping.
+- Other countries outside Canada: duties and import taxes are paid by the buyer (not collected at checkout).
 - Checkout runs on checkout.touchpointsconce.com (the store's primary domain). Never point the bare domain back at Shopify.
 - Price, shipping, policies and order emails are changed in Shopify, not here.
