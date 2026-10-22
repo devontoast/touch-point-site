@@ -248,6 +248,19 @@ footer { border-top: 1px solid var(--rule-strong); padding-block: var(--s7) calc
 .signup button { height: 50px; border: 1px solid var(--ink); background: var(--ink); color: var(--white); font: 400 var(--t-body) var(--f-text); padding: 0 var(--s5); cursor: pointer; }
 .signup button:hover { background: var(--ink-hover); }
 .signup #signupMsg { min-height: 1.6em; }
+.legal { margin-top: var(--s7); padding-top: var(--s4); border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: var(--s2) var(--s5); font: 400 var(--t-meta)/1.6 var(--f-text); color: var(--ink-2); }
+.legal a, .legal button { color: var(--ink-2); }
+.legal button { border: 0; background: none; padding: 0; font: inherit; cursor: pointer; }
+.legal button:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* ---------- consent ---------- */
+.consent { position: fixed; z-index: 25; left: calc(var(--gl) + var(--s2)); bottom: calc(var(--s5) + env(safe-area-inset-bottom, 0px)); width: min(380px, calc(100% - var(--gl) - var(--gr) - var(--s4))); background: var(--white); color: var(--ink); border: 1px solid var(--rule-strong); padding: var(--s4); display: flex; flex-direction: column; gap: var(--s3); }
+.consent p { font-size: var(--t-meta); line-height: 1.6; }
+.consent p a { text-decoration: underline; text-underline-offset: 3px; }
+.consent .row { display: flex; gap: var(--s2); }
+.consent button { flex: 1; height: 40px; border: 1px solid var(--ink); background: var(--white); color: var(--ink); font: 400 var(--t-body) var(--f-text); cursor: pointer; }
+.consent button.yes { background: var(--ink); color: var(--white); }
+.consent button.yes:hover { background: var(--ink-hover); }
 
 /* ---------- cart: floating button + drawer ---------- */
 .cart-fab { position: fixed; z-index: 20; top: calc(var(--s7) + env(safe-area-inset-top, 0px)); right: calc(var(--gr) + var(--s4)); } /* same inset as the wordmark on the film */
@@ -316,19 +329,40 @@ body.lb-open { overflow: hidden; }
      2. Meta Pixel: paste the Pixel ID from Meta Events Manager into META_PIXEL_ID. Empty = no Meta code loads at all.
         The site sends PageView, ViewContent and AddToCart. InitiateCheckout and Purchase come from Shopify's
         Facebook & Instagram app on the checkout (connected Oct 21, 2026, same Pixel, Conversions API on).
-        Don't add checkout or purchase events here, or Meta counts them twice. -->
+        Don't add checkout or purchase events here, or Meta counts them twice.
+     3. Consent: the banner at the bottom of the page and "Cookie settings" in the footer.
+        CONSENT_MODE "notice" = Meta loads unless the visitor declines (clear notice, easy opt-out);
+        "opt-in" = Meta waits until the visitor accepts (stricter, e.g. for Quebec's Law 25; costs tracking data).
+        A browser sending Global Privacy Control counts as declined unless the visitor accepts.
+        The choice is kept in localStorage under "tp_consent". Vercel Analytics is cookieless and always runs. -->
 <script>
   window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
   window.META_PIXEL_ID = "1089802220522558"; // "Touch Point" dataset in the devansh business portfolio (not the ODS pixel)
+  window.CONSENT_MODE = "notice";
   window.track = function () {};
-  if (window.META_PIXEL_ID) {
-    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;
-    s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', window.META_PIXEL_ID);
-    fbq('track', 'PageView');
-    window.track = function (name, data) { try { fbq('track', name, data || {}); } catch (e) {} };
-  }
+  (function () {
+    var KEY = "tp_consent", choice = null;
+    try { choice = localStorage.getItem(KEY); } catch (e) {}
+    if (!choice && navigator.globalPrivacyControl) choice = "denied";
+    var c = window.tpConsent = { choice: choice, loaded: false };
+    function loadMeta() {
+      if (!window.META_PIXEL_ID || c.loaded) return;
+      c.loaded = true;
+      !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;
+      s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init', window.META_PIXEL_ID);
+      fbq('track', 'PageView');
+      window.track = function (name, data) { try { fbq('track', name, data || {}); } catch (e) {} };
+    }
+    c.set = function (value) {
+      c.choice = value;
+      try { localStorage.setItem(KEY, value); } catch (e) {}
+      if (value === "granted") { loadMeta(); if (window.fbq) fbq('consent', 'grant'); }
+      else { if (window.fbq) fbq('consent', 'revoke'); window.track = function () {}; }
+    };
+    if (choice === "granted" || (!choice && window.CONSENT_MODE === "notice")) loadMeta();
+  })();
 </script>
 <script defer src="/_vercel/insights/script.js"></script>
 </head>
@@ -515,7 +549,24 @@ body.lb-open { overflow: hidden; }
       <p class="label" id="signupMsg" role="status"></p>
     </div>
   </div>
+  <div class="inner">
+    <nav class="legal" aria-label="Legal">
+      <span>© 2026 Touch Point</span>
+      <a href="https://checkout.touchpointsconce.com/policies/privacy-policy">Privacy policy</a>
+      <a href="https://checkout.touchpointsconce.com/pages/data-sharing-opt-out">Your privacy choices</a>
+      <button type="button" id="cookieSettings">Cookie settings</button>
+      <a href="mailto:hello@touchpointsconce.com">hello@touchpointsconce.com</a>
+    </nav>
+  </div>
 </footer>
+
+<div class="consent" id="consent" hidden role="region" aria-label="Cookie consent">
+  <p>We use cookies to understand visits and to show Touch Point to people on Instagram and Facebook. <a href="https://checkout.touchpointsconce.com/policies/privacy-policy">Privacy policy</a></p>
+  <div class="row">
+    <button type="button" id="consentNo">Decline</button>
+    <button type="button" class="yes" id="consentYes">Accept</button>
+  </div>
+</div>
 
 <div class="toast" id="toast" hidden role="status"></div>
 <div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="Photo">
@@ -1016,6 +1067,15 @@ body.lb-open { overflow: hidden; }
   });
 
   /* ---------- email sign-up: adds a subscribed customer in Shopify ---------- */
+  // Consent banner: shown until the visitor chooses; "Cookie settings" in the footer reopens it.
+  const consentBox = $("consent");
+  const showConsent = () => { consentBox.hidden = false; };
+  const hideConsent = () => { consentBox.hidden = true; };
+  if (!window.tpConsent.choice) showConsent();
+  $("consentYes").addEventListener("click", () => { window.tpConsent.set("granted"); hideConsent(); });
+  $("consentNo").addEventListener("click", () => { window.tpConsent.set("denied"); hideConsent(); });
+  $("cookieSettings").addEventListener("click", showConsent);
+
   $("signup").addEventListener("submit", async e => {
     e.preventDefault();
     const v = $("email").value.trim(), msg = $("signupMsg");
