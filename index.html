@@ -314,8 +314,9 @@ body.lb-open { overflow: hidden; }
      1. Vercel Web Analytics: page views, referrers, countries, devices. Turn it on in Vercel → touch-point-site → Analytics;
         until then the script is a harmless 404.
      2. Meta Pixel: paste the Pixel ID from Meta Events Manager into META_PIXEL_ID. Empty = no Meta code loads at all.
-        The site sends PageView, ViewContent, AddToCart and InitiateCheckout. Purchase comes from Shopify's
-        Facebook & Instagram app on the checkout, connected to this same Pixel. -->
+        The site sends PageView, ViewContent and AddToCart. InitiateCheckout and Purchase come from Shopify's
+        Facebook & Instagram app on the checkout (connected Oct 21, 2026, same Pixel, Conversions API on).
+        Don't add checkout or purchase events here, or Meta counts them twice. -->
 <script>
   window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
   window.META_PIXEL_ID = "1089802220522558"; // "Touch Point" dataset in the devansh business portfolio (not the ODS pixel)
@@ -955,8 +956,7 @@ body.lb-open { overflow: hidden; }
   fab.addEventListener("click", () => openDrawer(0));
   $("checkoutLink").addEventListener("click", () => {
     if (!cart) return;
-    const st = cart.cost.subtotalAmount;
-    window.track("InitiateCheckout", { content_ids: [HANDLE], content_type: "product", num_items: cart.totalQuantity, value: Number(st.amount), currency: st.currencyCode });
+    // No Meta InitiateCheckout here: Shopify's Facebook & Instagram app sends it from the checkout itself.
     window.va("event", { name: "checkout_click" });
   });
   $("drawerClose").addEventListener("click", closeDrawer);
