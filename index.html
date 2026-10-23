@@ -173,6 +173,8 @@ section.details, section.home, section.about, section.press { padding-block: var
 .qty { display: inline-flex; align-items: center; border: 1px solid var(--ink); }
 .qty button { width: 40px; height: 48px; background: none; border: 0; color: var(--ink); font: 400 var(--t-item) var(--f-text); cursor: pointer; }
 .qty output { min-width: 2ch; text-align: center; }
+/* phones and tablets: Add to cart sits right under the price, the description follows */
+@media (max-width: 959px) { .buy .desc { order: 1; } }
 .add { flex: 0 1 260px; min-width: 0; height: 50px; border: 1px solid var(--ink); background: var(--ink); color: var(--white); font: 400 var(--t-body) var(--f-text); cursor: pointer; display: flex; justify-content: center; align-items: center; padding: 0 var(--s4); }
 .add:hover { background: var(--ink-hover); }
 .addnote { margin-top: calc(var(--s2) * -1); font-size: var(--t-meta); color: var(--ink-2); min-height: 1.4em; }
@@ -416,11 +418,6 @@ body.lb-open { overflow: hidden; }
 
 
         <div class="cartrow">
-          <div class="qty" role="group" aria-label="Quantity">
-            <button type="button" id="qMinus" aria-label="One fewer">−</button>
-            <output id="qty" class="num" aria-live="polite">1</output>
-            <button type="button" id="qPlus" aria-label="One more">+</button>
-          </div>
           <button class="add" id="addBtn" type="button">Add to cart</button>
         </div>
         <p class="preorder">Shipping starts early November 2026.</p>
@@ -876,7 +873,7 @@ body.lb-open { overflow: hidden; }
   };
   /* #us, #fr, #gb … on the link previews another country. */
   const fromHash = () => { const h = (location.hash || "").slice(1).toUpperCase(); return /^[A-Z]{2}$/.test(h) && NAMES[h] ? h : null; };
-  let country = fromHash() || detectCountry(), qty = 1, variantId = null, buyable = false;
+  let country = fromHash() || detectCountry(), variantId = null, buyable = false;
   window.addEventListener("hashchange", () => { const h = fromHash(); if (h && h !== country) { country = h; loadPrice(); } });
 
   const FALLBACK = { CA: ["350", "CAD"] };
@@ -1051,11 +1048,8 @@ body.lb-open { overflow: hidden; }
   }
   refreshCart();
 
-  $("qMinus").addEventListener("click", () => { qty = Math.max(1, qty - 1); $("qty").textContent = qty; });
-  $("qPlus").addEventListener("click", () => { qty = Math.min(10, qty + 1); $("qty").textContent = qty; });
-
   async function addToCart() {
-    const lines = [{ merchandiseId: variantId, quantity: qty }];
+    const lines = [{ merchandiseId: variantId, quantity: 1 }];
     const existing = cart || readCart();
     if (existing) {
       const d = await sf(`mutation A($id: ID!, $lines: [CartLineInput!]!) { cartLinesAdd(cartId: $id, lines: $lines) { cart { ${CART_FIELDS} } userErrors { message } } }`, { id: existing.id, lines });
@@ -1074,10 +1068,10 @@ body.lb-open { overflow: hidden; }
     $("addNote").textContent = "";
     try {
       const c = await addToCart();
-      setCart(c); openDrawer(qty);
+      setCart(c); openDrawer(1);
       const p = $("price").dataset.amount;
-      window.track("AddToCart", { content_ids: [HANDLE], content_type: "product", num_items: qty,
-        value: p ? Number(p) * qty : undefined, currency: $("price").dataset.currency });
+      window.track("AddToCart", { content_ids: [HANDLE], content_type: "product", num_items: 1,
+        value: p ? Number(p) : undefined, currency: $("price").dataset.currency });
       window.va("event", { name: "add_to_cart" });
     } catch (e) {
       $("addNote").textContent = "That didn't go through. Try again, or email hello@touchpointsconce.com.";
