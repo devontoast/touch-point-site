@@ -602,6 +602,25 @@ body.lb-open { overflow: hidden; }
 (() => {
   const $ = id => document.getElementById(id);
 
+  /* ---------- land on the product ----------
+     Paid clicks (utm_medium=paid, which every Meta ad link carries) and links ending in #product
+     open at the product section instead of the film. Everyone else lands on the film as before.
+     The jump runs again once the page has loaded, unless the visitor has already started scrolling. */
+  (() => {
+    const q = new URLSearchParams(location.search);
+    if (location.hash.toLowerCase() !== "#product" && (q.get("utm_medium") || "").toLowerCase() !== "paid") return;
+    const target = $("product");
+    if (!target) return;
+    if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+    let moved = false;
+    const stop = () => { moved = true; };
+    ["wheel", "touchstart", "keydown", "mousedown"].forEach(e => window.addEventListener(e, stop, { once: true, passive: true }));
+    const go = () => { if (!moved) target.scrollIntoView({ block: "start", behavior: "auto" }); };
+    go();
+    requestAnimationFrame(go);
+    window.addEventListener("load", go, { once: true });
+  })();
+
   /* ---------- film ---------- */
   const film = $("film");
   /* Portrait screens get the 9:16 cut, framed shot by shot on the sconce; everything else gets the 16:9 film. */
