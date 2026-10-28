@@ -455,7 +455,7 @@ body.lb-open { overflow: hidden; }
         </div>
         <p class="preorder">Made to order. Ships by November 6.</p>
         <ul class="trust" aria-label="What you get">
-          <li><a href="#shipping" data-open="shipping">Free 30-day returns</a></li>
+          <li><a href="#shipping" data-open="shipping">30-day returns</a></li>
           <li><a href="#warranty" data-open="warranty">2-year warranty</a></li>
           <li><a href="#about">Made in Toronto</a></li>
           <li><a href="https://designto.org/awards/2026-designto-awards/" target="_blank" rel="noopener">DesignTO 2026 Juror's Choice</a></li>
@@ -497,7 +497,8 @@ body.lb-open { overflow: hidden; }
             <p>In the United States, the price includes import duties, so there's nothing more to pay on delivery.</p>
             <p>Elsewhere outside Canada, import duties and taxes aren't included and are paid by you. Your carrier may collect them on delivery.</p>
             <p>Each Touch Point is made to order in Toronto. Orders ship in the order they were placed, by November 6.</p>
-            <p>Returns are free for 30 days from delivery. Email <a href="mailto:hello@touchpointsconce.com">hello@touchpointsconce.com</a> with your order number and we'll send you a prepaid return label. You're refunded once it's back with us.</p>
+            <p>You can return Touch Point within 30 days of delivery. Email <a href="mailto:hello@touchpointsconce.com">hello@touchpointsconce.com</a> with your order number and we'll send return instructions. Return shipping is paid by you, and you're refunded for the product once it's back with us. Original shipping and import duties aren't refunded.</p>
+            <p>Arrived damaged or defective? Email us within 30 days with your order number and photos. We'll refund the product and your shipping, including the cost of sending it back.</p>
           </div>
         </details>
         <details id="warranty">
@@ -660,7 +661,7 @@ body.lb-open { overflow: hidden; }
   })();
 
   /* ---------- trust row: links open their Details accordion ----------
-     "Free 30-day returns" and "2-year warranty" open the matching accordion and scroll to it,
+     "30-day returns" and "2-year warranty" open the matching accordion and scroll to it,
      without changing the URL hash (a two-letter hash sets the price country). */
   document.querySelectorAll("[data-open]").forEach(a => a.addEventListener("click", e => {
     const d = $(a.dataset.open);
