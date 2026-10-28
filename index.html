@@ -154,7 +154,9 @@ section.details, section.home, section.about, section.press { padding-block: var
 .buy { display: flex; flex-direction: column; gap: var(--s5); min-width: 0; }
 @media (min-width: 960px) { .buy { position: sticky; top: calc(var(--s6) + env(safe-area-inset-top, 0px)); } }
 .buy h2 { margin: 0; font: 400 var(--t-head)/1.15 var(--f-text); letter-spacing: -.01em; }
-.price-block { padding-block: var(--row); border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+/* The price sits right above Add to cart, under one rule that separates it from the description. */
+.price-block { padding-top: var(--row); border-top: 1px solid var(--rule); }
+.price-block + .cartrow { margin-top: calc(var(--s3) - var(--s5)); }
 .price-line .amt { font-size: var(--t-item); }
 .cartrow + .preorder { margin-top: calc(var(--s3) - var(--s5)); }
 .preorder { display: flex; align-items: center; font-size: var(--t-meta); }
@@ -440,14 +442,14 @@ body.lb-open { overflow: hidden; }
 
       <div class="buy">
         <h2 id="pName">Touch Point Sconce</h2>
+        <div class="desc"><p>A pendant hangs from the body of the sconce, inviting interaction through curiosity. As the proximity of the pendant to the indent in the shade shrinks, the light of the sconce is gently lit. When finally they meet, the pendant is held in place, the light remaining at full brightness until it’s removed once again - a hello and a goodbye at your fingertips.</p><p>Balancing a grounded and innately playful design with a resolution of form and manufacturing consideration, Touch Point lends a more inviting, human spirit to a well explored consumer electronics subcategory.</p></div>
+
+
         <div class="price-block">
           <div class="price-line">
             <span class="amt num" id="price">$350 CAD</span>
           </div>
         </div>
-        <div class="desc"><p>A handshake, a hug, a kiss, the tap of a shoulder - moments of physical connection are an ever present part of our lives. Touch Point is a sconce that cherishes these fleeting moments.</p><p>A pendant hangs from the body of the sconce, inviting interaction through curiosity. As the proximity of the pendant to the indent in the shade shrinks, the light of the sconce is gently lit. When finally they meet, the pendant is held in place, the light remaining at full brightness until it’s removed once again - a hello and a goodbye at your fingertips.</p><p>Balancing a grounded and innately playful design with a resolution of form and manufacturing consideration, Touch Point lends a more inviting, human spirit to a well explored consumer electronics subcategory.</p></div>
-
-
         <div class="cartrow">
           <button class="add" id="addBtn" type="button">Add to cart</button>
         </div>
