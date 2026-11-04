@@ -136,7 +136,7 @@ section.details, section.home, section.about, section.press { padding-block: var
 .shot.wide { aspect-ratio: 16 / 9; }
 .shot.land { aspect-ratio: 1600 / 1306; }
 .shot.land32 { aspect-ratio: 3 / 2; }
-.shot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; user-select: none; -webkit-user-drag: none; }
+.shot img, .shot video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; user-select: none; -webkit-user-drag: none; }
 .gallery .shot { aspect-ratio: 4 / 5; }
 .shot.pair, .home-slider .slide { cursor: zoom-in; -webkit-tap-highlight-color: transparent; }
 .shot .on { opacity: 0; transition: opacity var(--fade) var(--ease); }
@@ -421,6 +421,10 @@ body.lb-open { overflow: hidden; }
     <div class="product-grid" id="lightScope">
       <div>
         <div class="gallery" id="gallery">
+          <figure class="shot clip">
+            <video id="galleryClip" src="media/insitu-wall.mp4" poster="media/insitu-wall-poster.jpg" width="1600" height="2000" autoplay muted loop playsinline preload="auto"
+              aria-label="A hand brings the puck up to Touch Point on a white wall; the light comes up as it docks, then dims as it is pulled away"></video>
+          </figure>
           <figure class="shot pair is-on">
             <img src="img/tp-room_off.jpg" width="1600" height="2000" alt="Touch Point above a chair and a stack of books in afternoon light">
             <img class="on" src="img/tp-room_on.jpg" width="1600" height="2000" alt="" aria-hidden="true">
@@ -437,7 +441,7 @@ body.lb-open { overflow: hidden; }
             <button class="photo-btn" type="button" role="switch" aria-checked="true"><span class="bulb" aria-hidden="true"></span><span data-lbl>Turn off</span></button>
           </figure>
         </div>
-        <div class="dots" id="dots" aria-hidden="true"><span class="cur"></span><span></span><span></span></div>
+        <div class="dots" id="dots" aria-hidden="true"><span class="cur"></span><span></span><span></span><span></span></div>
       </div>
 
       <div class="buy">
@@ -872,6 +876,15 @@ body.lb-open { overflow: hidden; }
     b.addEventListener("click", e => { e.stopPropagation(); toggle(); });
     fig.addEventListener("click", () => openPhoto(galleryItems, figs.indexOf(fig)));
   });
+
+  /* the gallery's first asset is a short looping clip: it plays only while on screen, and stays on its first frame for reduced motion */
+  const gclip = $("galleryClip");
+  if (gclip) {
+    if (reduce) { gclip.removeAttribute("autoplay"); gclip.pause(); }
+    else if ("IntersectionObserver" in window) new IntersectionObserver(es => es.forEach(e => {
+      if (e.isIntersecting) { const p = gclip.play(); if (p && p.catch) p.catch(() => {}); } else gclip.pause();
+    }), { threshold: 0.25 }).observe(gclip);
+  }
 
   const gal = $("gallery"), dots = [...$("dots").children];
   gal.addEventListener("scroll", () => {
