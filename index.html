@@ -677,13 +677,13 @@ body.lb-open { overflow: hidden; }
   const $ = id => document.getElementById(id);
 
   /* ---------- creator links ----------
-     A short path per creator (touchpointsconce.com/ybl) shows this same page (vercel.json rewrites it to index.html).
+     A short path per creator (touchpointsconce.com/brickloft) shows this same page (vercel.json rewrites it to index.html).
      Visitors who arrive on it are tagged as if they'd clicked a full UTM link, so Shopify credits the creator,
      and they open at the product. Vercel's free plan can't read UTM tags but does count each path, so the
      creator's visits show as their own page; their add-to-carts and checkout clicks are counted as hidden page
      views at /<slug>/added-to-cart and /<slug>/checkout-click. To add a creator: a line here plus a rewrite in vercel.json. */
   const CREATOR_LINKS = {
-    ybl: { utm_source: "yourbrickloft", utm_medium: "influencer", utm_campaign: "ybl-100k-giveaway" }
+    brickloft: { utm_source: "yourbrickloft", utm_medium: "influencer", utm_campaign: "ybl-100k-giveaway" }
   };
   const creatorSlug = (location.pathname.replace(/^\/+|\/+$/g, "").toLowerCase().split("/")[0]) || "";
   const creatorTags = CREATOR_LINKS[creatorSlug] || null;

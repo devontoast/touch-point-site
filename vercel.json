@@ -1,8 +1,10 @@
 {
   "redirects": [
-    { "source": "/ybl/", "destination": "/ybl", "permanent": false }
+    { "source": "/brickloft/", "destination": "/brickloft", "permanent": false },
+    { "source": "/ybl", "destination": "/brickloft", "permanent": false },
+    { "source": "/ybl/", "destination": "/brickloft", "permanent": false }
   ],
   "rewrites": [
-    { "source": "/ybl", "destination": "/index.html" }
+    { "source": "/brickloft", "destination": "/index.html" }
   ]
 }
