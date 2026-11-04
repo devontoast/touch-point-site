@@ -645,13 +645,25 @@ body.lb-open { overflow: hidden; }
 (() => {
   const $ = id => document.getElementById(id);
 
+  /* ---------- creator links ----------
+     A short path per creator (touchpointsconce.com/ybl) shows this same page (vercel.json rewrites it to index.html).
+     Visitors who arrive on it are tagged as if they'd clicked a full UTM link, so Shopify credits the creator,
+     and they open at the product. Vercel's free plan can't read UTM tags but does count each path, so the
+     creator's visits show as their own page; their add-to-carts and checkout clicks are counted as hidden page
+     views at /<slug>/added-to-cart and /<slug>/checkout-click. To add a creator: a line here plus a rewrite in vercel.json. */
+  const CREATOR_LINKS = {
+    ybl: { utm_source: "yourbrickloft", utm_medium: "influencer", utm_campaign: "ybl-100k-giveaway" }
+  };
+  const creatorSlug = (location.pathname.replace(/^\/+|\/+$/g, "").toLowerCase().split("/")[0]) || "";
+  const creatorTags = CREATOR_LINKS[creatorSlug] || null;
+
   /* ---------- land on the product ----------
      Paid clicks (utm_medium=paid, which every Meta ad link carries) and links ending in #product
      open at the product section instead of the film. Everyone else lands on the film as before.
      The jump runs again once the page has loaded, unless the visitor has already started scrolling. */
   (() => {
     const q = new URLSearchParams(location.search);
-    if (location.hash.toLowerCase() !== "#product" && (q.get("utm_medium") || "").toLowerCase() !== "paid") return;
+    if (!creatorTags && location.hash.toLowerCase() !== "#product" && (q.get("utm_medium") || "").toLowerCase() !== "paid") return;
     const target = $("product");
     if (!target) return;
     if ("scrollRestoration" in history) history.scrollRestoration = "manual";
@@ -986,16 +998,19 @@ body.lb-open { overflow: hidden; }
      appended to the checkout link, so Shopify's reports credit the real source, and saved on the cart, so they show on the order. */
   const ATTR_KEY = "tp-attr", ATTR_DAYS = 30;
   const TAGS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "fbclid"];
+  let attrFresh = false; // true when this visit brought new tags or a first outside referrer
   const attribution = (() => {
     let saved = null;
     try { saved = JSON.parse(localStorage.getItem(ATTR_KEY) || "null"); } catch (e) {}
     if (saved && Date.now() - (saved.at || 0) > ATTR_DAYS * 864e5) saved = null;
     const q = new URLSearchParams(location.search), fresh = {};
     TAGS.forEach(k => { const v = q.get(k); if (v) fresh[k] = v.slice(0, 200); });
+    if (creatorTags && !fresh.utm_source) Object.assign(fresh, creatorTags);
     let ref = "";
     try { const r = document.referrer && new URL(document.referrer); if (r && r.hostname !== location.hostname) ref = r.hostname; } catch (e) {}
     if (Object.keys(fresh).length || (ref && !saved)) {
       saved = { tags: fresh, referrer: ref, landing: location.pathname + location.search.slice(0, 300), at: Date.now() };
+      attrFresh = true;
       try { localStorage.setItem(ATTR_KEY, JSON.stringify(saved)); } catch (e) {}
     }
     return saved;
@@ -1009,6 +1024,15 @@ body.lb-open { overflow: hidden; }
       return u.toString();
     } catch (e) { return url; }
   };
+  /* Hidden funnel page view for visitors credited to a creator link (see "creator links" above).
+     Uses the saved tags, so a visitor who came from /ybl and returns within 30 days still counts. */
+  const creatorStep = step => {
+    const src = attribution && attribution.tags && attribution.tags.utm_source;
+    const slug = Object.keys(CREATOR_LINKS).find(k => CREATOR_LINKS[k].utm_source === src);
+    if (!slug) return;
+    const path = `/${slug}/${step}`;
+    try { window.va("pageview", { route: path, path }); } catch (e) {}
+  };
   const cartAttributes = () => {
     if (!attribution) return [];
     const a = Object.entries(attribution.tags || {}).map(([key, value]) => ({ key, value }));
@@ -1016,6 +1040,17 @@ body.lb-open { overflow: hidden; }
     if (attribution.landing) a.push({ key: "landing_page", value: attribution.landing });
     return a;
   };
+  /* A cart made on an earlier visit keeps that visit's tags. When this visit brought new ones (an ad click),
+     copy them onto the existing cart so the order credits the ad. Best effort: never blocks the cart. */
+  async function syncCartAttributes(c) {
+    if (!c || !c.id) return c;
+    const attrs = cartAttributes(); if (!attrs.length) return c;
+    try {
+      const d = await sf(`mutation T($id: ID!, $a: [AttributeInput!]!) { cartAttributesUpdate(cartId: $id, attributes: $a) { cart { ${CART_FIELDS} } userErrors { message } } }`, { id: c.id, a: attrs });
+      const r = d.cartAttributesUpdate;
+      return r && r.cart && !(r.userErrors || []).length ? r.cart : c;
+    } catch (e) { return c; }
+  }
 
   /* ---------- cart: Shopify cart, a drawer that opens on add, and a floating button while it holds items ---------- */
   const CART_KEY = "tp-cart";
@@ -1095,6 +1130,7 @@ body.lb-open { overflow: hidden; }
     if (!cart) return;
     // No Meta InitiateCheckout here: Shopify's Facebook & Instagram app sends it from the checkout itself.
     window.va("event", { name: "checkout_click" });
+    creatorStep("checkout-click");
   });
   $("drawerClose").addEventListener("click", closeDrawer);
   $("drawerScrim").addEventListener("click", closeDrawer);
@@ -1113,7 +1149,9 @@ body.lb-open { overflow: hidden; }
     const c = readCart(); if (!c) { renderCart(); return; }
     try {
       const d = await sf(`query C($id: ID!) { cart(id: $id) { ${CART_FIELDS} } }`, { id: c.id });
-      setCart(d.cart && d.cart.totalQuantity ? d.cart : (d.cart || null));
+      let fresh = d.cart && d.cart.totalQuantity ? d.cart : (d.cart || null);
+      if (fresh && attrFresh) { fresh = await syncCartAttributes(fresh); attrFresh = false; }
+      setCart(fresh);
     } catch (e) { renderCart(); }
   }
   refreshCart();
@@ -1124,7 +1162,10 @@ body.lb-open { overflow: hidden; }
     if (existing) {
       const d = await sf(`mutation A($id: ID!, $lines: [CartLineInput!]!) { cartLinesAdd(cartId: $id, lines: $lines) { cart { ${CART_FIELDS} } userErrors { message } } }`, { id: existing.id, lines });
       const r = d.cartLinesAdd;
-      if (r.cart && !(r.userErrors || []).length) return r.cart;
+      if (r.cart && !(r.userErrors || []).length) {
+        if (attrFresh) { attrFresh = false; return syncCartAttributes(r.cart); }
+        return r.cart;
+      }
     }
     const d = await sf(`mutation N($input: CartInput!) { cartCreate(input: $input) { cart { ${CART_FIELDS} } userErrors { message } } }`,
       { input: { lines, buyerIdentity: { countryCode: country }, attributes: cartAttributes() } });
@@ -1143,6 +1184,7 @@ body.lb-open { overflow: hidden; }
       window.track("AddToCart", { content_ids: [HANDLE], content_type: "product", num_items: 1,
         value: p ? Number(p) : undefined, currency: $("price").dataset.currency });
       window.va("event", { name: "add_to_cart" });
+      creatorStep("added-to-cart");
     } catch (e) {
       $("addNote").textContent = "That didn't go through. Try again, or email hello@touchpointsconce.com.";
     }
