@@ -153,6 +153,7 @@ section.details, section.home, section.about, section.press { padding-block: var
 
 .buy { display: flex; flex-direction: column; gap: var(--s5); min-width: 0; }
 @media (min-width: 960px) { .buy { position: sticky; top: calc(var(--s6) + env(safe-area-inset-top, 0px)); } }
+.buy .how { margin: calc(var(--s3) - var(--s5)) 0 0; font-size: var(--t-item); line-height: 1.45; max-width: 36ch; }
 .buy h2 { margin: 0; font: 400 var(--t-head)/1.15 var(--f-text); letter-spacing: -.01em; }
 /* The price sits right above Add to cart, under one rule that separates it from the description. */
 .price-block { padding-top: var(--row); border-top: 1px solid var(--rule); }
@@ -261,15 +262,28 @@ footer { border-top: 1px solid var(--rule-strong); padding-block: var(--s7) calc
 .legal button:hover { text-decoration: underline; text-underline-offset: 3px; }
 
 /* ---------- consent ---------- */
-/* A slim bar along the bottom edge, so it never sits over the price or Add to cart. */
-.consent { position: fixed; z-index: 25; left: 0; right: 0; bottom: 0; padding: var(--s3) var(--gr) calc(var(--s3) + env(safe-area-inset-bottom, 0px)) var(--gl); background: var(--white); color: var(--ink); border-top: 1px solid var(--rule-strong); display: flex; align-items: center; gap: var(--s3) var(--s5); }
-.consent p { flex: 1; min-width: 0; margin: 0; font-size: var(--t-meta); line-height: 1.5; }
-.consent p a { text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
-.consent .row { display: flex; gap: var(--s2); flex: none; }
-.consent button { min-width: 96px; height: 36px; padding: 0 var(--s4); border: 1px solid var(--ink); background: var(--white); color: var(--ink); font: 400 var(--t-meta) var(--f-text); cursor: pointer; }
-@media (max-width: 600px) { .consent { flex-wrap: wrap; padding-top: var(--s2); padding-bottom: calc(var(--s2) + env(safe-area-inset-bottom, 0px)); gap: var(--s2); } .consent p { flex-basis: 100%; } .consent .row { flex: 1; } .consent button { flex: 1; height: 34px; } }
+/* A small card in the bottom corner (full width minus the gutters on phones), one line of text and two small buttons.
+   It sits above the mobile buy bar when that is showing (--bb-h). */
+.consent { position: fixed; z-index: 25; left: var(--gl); bottom: calc(var(--bb-h, 0px) + var(--s3) + env(safe-area-inset-bottom, 0px)); width: min(440px, calc(100% - var(--gl) - var(--gr))); background: var(--white); color: var(--ink); border: 1px solid var(--rule-strong); padding: var(--s2) var(--s2) var(--s2) var(--s3); display: flex; align-items: center; gap: var(--s3); transition: bottom 240ms var(--ease); }
+.consent p { flex: 1; min-width: 0; margin: 0; font-size: 12px; line-height: 1.35; }
+.consent p a { text-decoration: underline; text-underline-offset: 2px; white-space: nowrap; }
+.consent .row { display: flex; gap: var(--s1); flex: none; }
+.consent button { height: 30px; padding: 0 10px; border: 1px solid var(--ink); background: var(--white); color: var(--ink); font: 400 12px var(--f-text); cursor: pointer; }
 .consent button.yes { background: var(--ink); color: var(--white); }
 .consent button.yes:hover { background: var(--ink-hover); }
+
+/* ---------- mobile buy bar: price + Add to cart stay on screen once you scroll past the button ---------- */
+.buybar { display: none; }
+@media (max-width: 959px) {
+  .buybar { display: flex; position: fixed; z-index: 22; left: 0; right: 0; bottom: 0; align-items: center; gap: var(--s3); padding: var(--s2) var(--gr) calc(var(--s2) + env(safe-area-inset-bottom, 0px)) var(--gl); background: var(--white); border-top: 1px solid var(--rule-strong); transform: translateY(105%); transition: transform 240ms var(--ease); }
+  .buybar.show { transform: none; }
+  .buybar .bb-info { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.3; }
+  .buybar .bb-name { font-size: var(--t-meta); color: var(--ink-2); }
+  .buybar .bb-price { font-size: var(--t-body); }
+  .buybar .add { flex: 0 0 auto; height: 44px; padding: 0 var(--s5); }
+  body.bb-on { padding-bottom: var(--bb-h, 0px); }
+  body.bb-on .toast { bottom: calc(var(--bb-h, 0px) + var(--s3)); }
+}
 
 /* ---------- cart: floating button + drawer ---------- */
 .cart-fab { position: fixed; z-index: 20; top: calc(var(--s7) + env(safe-area-inset-top, 0px)); right: calc(var(--gr) + var(--s4)); } /* same inset as the wordmark on the film */
@@ -339,17 +353,17 @@ body.lb-open { overflow: hidden; }
         The site sends PageView, ViewContent and AddToCart. InitiateCheckout and Purchase come from Shopify's
         Facebook & Instagram app on the checkout (connected Oct 21, 2026, same Pixel, Conversions API on).
         Don't add checkout or purchase events here, or Meta counts them twice.
-     3. Consent, by region (Oct 28, 2026). /api/geo returns the visitor's country and region from Vercel's headers:
-        "none"   = United States: no banner, Meta loads; "Your privacy choices" and Cookie settings in the footer to opt out.
-        "notice" = Canada outside Quebec and the rest of the world: a slim bar with OK / Decline; Meta loads unless declined.
+     3. Consent, by region (updated Nov 4, 2026). /api/geo returns the visitor's country and region from Vercel's headers:
+        "none"   = the US, Canada outside Quebec and everywhere not listed below: no banner, Meta loads;
+                   "Cookie settings" and "Your privacy choices" in the footer to opt out.
         "opt-in" = Quebec (Law 25, banner in French), the EU/EEA, the UK and Switzerland, and anyone whose region
-                   can't be read: Meta waits until the visitor accepts.
+                   can't be read: a small card with Accept / Decline, and Meta waits until the visitor accepts.
         A browser sending Global Privacy Control counts as declined unless the visitor accepts.
         The choice is kept in localStorage under "tp_consent". Vercel Analytics is cookieless and always runs. -->
 <script>
   window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
   window.META_PIXEL_ID = "1089802220522558"; // "Touch Point" dataset in the devansh business portfolio (not the ODS pixel)
-  window.CONSENT_MODE = null; // set per visitor once /api/geo answers: "none" | "notice" | "opt-in"
+  window.CONSENT_MODE = null; // set per visitor once /api/geo answers: "none" | "opt-in"
   window.track = function () {};
   (function () {
     var KEY = "tp_consent", choice = null;
@@ -375,9 +389,8 @@ body.lb-open { overflow: hidden; }
     var OPT_IN = "AT BE BG HR CY CZ DK EE FI FR DE GR HU IE IT LV LT LU MT NL PL PT RO SK SI ES SE IS LI NO GB CH".split(" ");
     function modeFor(g) {
       if (!g || !g.country) return "opt-in";
-      if (g.country === "US") return "none";
-      if (g.country === "CA") return g.region === "QC" ? "opt-in" : "notice";
-      return OPT_IN.indexOf(g.country) > -1 ? "opt-in" : "notice";
+      if (g.country === "CA") return g.region === "QC" ? "opt-in" : "none";
+      return OPT_IN.indexOf(g.country) > -1 ? "opt-in" : "none";
     }
     function getGeo() {
       try { var s = sessionStorage.getItem("tp_geo"); if (s) return Promise.resolve(JSON.parse(s)); } catch (e) {}
@@ -446,6 +459,7 @@ body.lb-open { overflow: hidden; }
 
       <div class="buy">
         <h2 id="pName">Touch Point Sconce</h2>
+        <p class="how">Bring the puck close and the light rises. Dock the puck for full brightness and it stays on.</p>
         <div class="desc"><p>A pendant hangs from the body of the sconce, inviting interaction through curiosity. As the proximity of the pendant to the indent in the shade shrinks, the light of the sconce is gently lit. When finally they meet, the pendant is held in place, the light remaining at full brightness until it’s removed once again - a hello and a goodbye at your fingertips.</p><p>Balancing a grounded and innately playful design with a resolution of form and manufacturing consideration, Touch Point lends a more inviting, human spirit to a well explored consumer electronics subcategory.</p></div>
 
 
@@ -611,6 +625,10 @@ body.lb-open { overflow: hidden; }
   </div>
 </div>
 
+<div class="buybar" id="buybar" aria-hidden="true" inert>
+  <div class="bb-info"><span class="bb-name">Touch Point Sconce</span><span class="bb-price num" id="bbPrice">$350 CAD</span></div>
+  <button class="add bb-add" id="bbAdd" type="button" tabindex="-1">Add to cart</button>
+</div>
 <div class="toast" id="toast" hidden role="status"></div>
 <div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="Photo">
   <div class="lb-stage" id="lbStage">
@@ -1132,6 +1150,32 @@ body.lb-open { overflow: hidden; }
     if (!r.cart) throw new Error((r.userErrors[0] || {}).message || "Cart error");
     return r.cart;
   }
+  /* ---------- mobile buy bar ----------
+     Once the main Add to cart has scrolled up off screen (phones and tablets only), a bar with the price and
+     its own Add to cart slides up from the bottom. It mirrors the main button (label, disabled) and the price,
+     and its button just presses the main one. --bb-h lets the consent card and toast sit above it. */
+  (() => {
+    const bar = $("buybar"), bbAdd = $("bbAdd"), bbPrice = $("bbPrice"), main = $("addBtn"), price = $("price");
+    if (!bar || !main || !("IntersectionObserver" in window)) return;
+    const narrow = window.matchMedia("(max-width: 959px)");
+    const sync = () => { bbPrice.textContent = price.textContent; bbAdd.textContent = main.textContent; bbAdd.disabled = main.disabled; };
+    sync();
+    new MutationObserver(sync).observe(price, { childList: true, characterData: true, subtree: true });
+    new MutationObserver(sync).observe(main, { childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ["disabled"] });
+    let past = false;
+    const render = () => {
+      const on = past && narrow.matches;
+      bar.classList.toggle("show", on);
+      document.body.classList.toggle("bb-on", on);
+      if (on) { bar.removeAttribute("inert"); bar.setAttribute("aria-hidden", "false"); bbAdd.tabIndex = 0; }
+      else { bar.setAttribute("inert", ""); bar.setAttribute("aria-hidden", "true"); bbAdd.tabIndex = -1; }
+      document.documentElement.style.setProperty("--bb-h", on ? bar.offsetHeight + "px" : "0px");
+    };
+    new IntersectionObserver(([e]) => { past = !e.isIntersecting && e.boundingClientRect.top < 0; render(); }).observe(main);
+    (narrow.addEventListener ? narrow.addEventListener("change", render) : narrow.addListener(render));
+    bbAdd.addEventListener("click", () => main.click());
+  })();
+
   $("addBtn").addEventListener("click", async () => {
     if (!buyable || !variantId) return;
     const btn = $("addBtn"); btn.disabled = true; btn.textContent = "Adding…";
@@ -1150,33 +1194,28 @@ body.lb-open { overflow: hidden; }
   });
 
   /* ---------- email sign-up: adds a subscribed customer in Shopify ---------- */
-  // Consent bar: what it says depends on the visitor's region (see the analytics note in <head>).
-  // "notice" regions get OK / Decline; "opt-in" regions get Accept / Decline, in French for Quebec.
-  // US visitors see nothing. "Cookie settings" in the footer reopens it for anyone.
+  // Consent card: only shown where opt-in is required (Quebec in French, the EU/EEA, the UK, Switzerland,
+  // or an unknown region; see the analytics note in <head>). Everyone else sees nothing.
+  // "Cookie settings" in the footer opens it for anyone.
   const consentBox = $("consent");
   const CONSENT_COPY = {
-    en: { notice: "We use cookies to show Touch Point to people on Instagram and Facebook.",
-          optin: "We'd like to use cookies to show Touch Point to people on Instagram and Facebook. They stay off unless you accept.",
-          link: "Privacy policy", yes: "Accept", ok: "OK", no: "Decline" },
-    fr: { notice: "Nous utilisons des témoins (cookies) pour présenter Touch Point sur Instagram et Facebook.",
-          optin: "Nous aimerions utiliser des témoins (cookies) pour présenter Touch Point sur Instagram et Facebook. Ils restent désactivés sans votre accord.",
-          link: "Politique de confidentialité", yes: "Accepter", ok: "OK", no: "Refuser" }
+    en: { text: "Allow cookies for Instagram and Facebook ads?", link: "Privacy", yes: "Accept", no: "Decline" },
+    fr: { text: "Autoriser les témoins pour les publicités Instagram et Facebook?", link: "Confidentialité", yes: "Accepter", no: "Refuser" }
   };
-  const showConsent = mode => {
+  const showConsent = () => {
     const t = CONSENT_COPY[window.tpConsent.lang] || CONSENT_COPY.en;
-    const optin = mode !== "notice";
-    $("consentText").textContent = optin ? t.optin : t.notice;
+    $("consentText").textContent = t.text;
     $("consentLink").textContent = t.link;
-    $("consentYes").textContent = optin ? t.yes : t.ok;
+    $("consentYes").textContent = t.yes;
     $("consentNo").textContent = t.no;
     consentBox.lang = window.tpConsent.lang || "en";
     consentBox.hidden = false;
   };
   const hideConsent = () => { consentBox.hidden = true; };
-  window.tpConsent.ready.then(mode => { if (!window.tpConsent.choice && mode !== "none") showConsent(mode); });
+  window.tpConsent.ready.then(mode => { if (!window.tpConsent.choice && mode === "opt-in") showConsent(); });
   $("consentYes").addEventListener("click", () => { window.tpConsent.set("granted"); hideConsent(); });
   $("consentNo").addEventListener("click", () => { window.tpConsent.set("denied"); hideConsent(); });
-  $("cookieSettings").addEventListener("click", () => showConsent("opt-in"));
+  $("cookieSettings").addEventListener("click", showConsent);
 
   $("signup").addEventListener("submit", async e => {
     e.preventDefault();
