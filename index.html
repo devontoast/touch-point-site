@@ -294,7 +294,15 @@ body.drawer-open { overflow: hidden; }
 .line .qty button { width: 34px; height: 34px; font-size: var(--t-body); }
 .line .remove { border: 0; background: none; padding: 0; color: var(--ink-2); font: 400 var(--t-meta) var(--f-text); cursor: pointer; }
 .line .remove:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
-.line .amt { font-size: var(--t-body); white-space: nowrap; }
+.line .amt { font-size: var(--t-body); white-space: nowrap; display: flex; flex-direction: column; align-items: flex-end; }
+.line .amt s { font-size: var(--t-meta); color: var(--ink-2); }
+/* pair offer: shown in the cart while it holds one sconce, only when Shopify's pair discount is running */
+.pair-offer { margin-top: var(--s4); padding: var(--s4); background: var(--tile); display: flex; flex-direction: column; gap: var(--s3); }
+.pair-offer p { font-size: var(--t-item); line-height: 1.4; }
+.pair-offer button { height: 44px; border: 1px solid var(--ink); background: var(--white); color: var(--ink); font: 400 var(--t-body) var(--f-text); cursor: pointer; }
+.pair-offer button:hover { background: var(--ink); color: var(--white); }
+.pair-offer button:disabled { opacity: .5; cursor: default; }
+.drawer-foot .saving { display: flex; justify-content: space-between; font-size: var(--t-meta); color: var(--ink-2); }
 .line.busy { opacity: .5; pointer-events: none; }
 .drawer-empty { padding-block: var(--s6); display: flex; flex-direction: column; gap: var(--s3); align-items: flex-start; }
 .drawer-empty button { border: 0; background: none; padding: 0; color: var(--ink); font: 400 var(--t-body) var(--f-text); cursor: pointer; }
@@ -635,6 +643,7 @@ body.lb-open { overflow: hidden; }
   </div>
   <div class="drawer-body" id="drawerBody"></div>
   <div class="drawer-foot" id="drawerFoot" hidden>
+    <div class="saving" id="cartSaving" hidden><span>Pair saving</span><span class="num" id="cartSavingAmt"></span></div>
     <div class="subtotal"><span>Subtotal</span><span class="num" id="cartSubtotal"></span></div>
     <p class="note">Shipping and taxes are calculated at checkout. Orders ship by November 6.</p>
     <a class="checkout" id="checkoutLink" href="#">Check out</a>
@@ -941,6 +950,8 @@ body.lb-open { overflow: hidden; }
     catch (e) { s = n.toLocaleString("en") + " "; }
     return s.trim() + " " + cur;
   };
+  /* In running text: "$50" for Canadian dollars, the full form ("$36 USD") for anything else. */
+  const fmtShort = (amount, cur) => cur === "CAD" ? fmt(amount, cur).replace(/ CAD$/, "") : fmt(amount, cur);
   /* #us, #fr, #gb … on the link previews another country. */
   const fromHash = () => { const h = (location.hash || "").slice(1).toUpperCase(); return /^[A-Z]{2}$/.test(h) && NAMES[h] ? h : null; };
   let country = fromHash() || detectCountry(), variantId = null, buyable = false;
@@ -970,6 +981,7 @@ body.lb-open { overflow: hidden; }
       $("price").dataset.live = "1";
       showPrice(v.price.amount, v.price.currencyCode);
       setBuyable(!!v.availableForSale);
+      if (cart) renderCart(); // the cart may have loaded first; the pair offer needs the variant id
       if (!viewSent) {
         viewSent = true;
         window.track("ViewContent", { content_ids: [HANDLE], content_type: "product", value: Number(v.price.amount), currency: v.price.currencyCode });
@@ -1022,7 +1034,8 @@ body.lb-open { overflow: hidden; }
   const readCart = () => { try { return JSON.parse(localStorage.getItem(CART_KEY) || "null"); } catch (e) { return null; } };
   const saveCart = c => { try { localStorage.setItem(CART_KEY, JSON.stringify(c ? { id: c.id, checkoutUrl: c.checkoutUrl, totalQuantity: c.totalQuantity } : null)); } catch (e) {} };
   const CART_FIELDS = `id checkoutUrl totalQuantity cost { subtotalAmount { amount currencyCode } }
-    lines(first: 20) { nodes { id quantity cost { totalAmount { amount currencyCode } } merchandise { ... on ProductVariant { id product { title } } } } }`;
+    lines(first: 20) { nodes { id quantity cost { subtotalAmount { amount currencyCode } totalAmount { amount currencyCode } }
+      discountAllocations { discountedAmount { amount currencyCode } } merchandise { ... on ProductVariant { id product { title } } } } }`;
   const fab = $("cartFab"), drawerEl = $("drawer"), drawerBody = $("drawerBody"), drawerFoot = $("drawerFoot");
   let cart = null, drawerOpen = false, lastFocus = null;
 
@@ -1055,18 +1068,72 @@ body.lb-open { overflow: hidden; }
       q.append(minus, out, plus);
       const rm = document.createElement("button"); rm.type = "button"; rm.className = "remove"; rm.textContent = "Remove";
       ctl.append(q, rm); info.append(name, ctl);
-      const amt = document.createElement("span"); amt.className = "amt num"; amt.textContent = fmt(t.amount, t.currencyCode);
+      const amt = document.createElement("div"); amt.className = "amt num";
+      const before = l.cost.subtotalAmount;
+      if (before && Number(before.amount) > Number(t.amount) + 0.004) {
+        const was = document.createElement("s"); was.textContent = fmt(before.amount, before.currencyCode); amt.appendChild(was);
+      }
+      const now = document.createElement("span"); now.textContent = fmt(t.amount, t.currencyCode); amt.appendChild(now);
       row.append(img, info, amt); drawerBody.appendChild(row);
       minus.addEventListener("click", () => changeLine(row, l.id, l.quantity - 1));
       plus.addEventListener("click", () => changeLine(row, l.id, Math.min(10, l.quantity + 1)));
       rm.addEventListener("click", () => changeLine(row, l.id, 0));
     });
+    // Pair offer: one sconce in the cart and the pair discount is running (checked with Shopify, see pairOffer).
+    const one = lines.length === 1 && lines[0].quantity === 1;
+    if (one && pairOff) {
+      const box = document.createElement("div"); box.className = "pair-offer";
+      const p = document.createElement("p"); p.textContent = "Add another sconce and get " + fmtShort(pairOff.amount, pairOff.currencyCode) + " off each.";
+      const b = document.createElement("button"); b.type = "button"; b.textContent = "Add another sconce";
+      b.addEventListener("click", () => {
+        b.disabled = true;
+        changeLine(drawerBody.querySelector(".line"), lines[0].id, 2);
+        const pr = $("price").dataset.amount;
+        window.track("AddToCart", { content_ids: [HANDLE], content_type: "product", num_items: 1,
+          value: pr ? Number(pr) : undefined, currency: $("price").dataset.currency });
+        window.va("event", { name: "pair_offer_add" });
+      });
+      box.append(p, b); drawerBody.appendChild(box);
+    } else if (one && pairOff === undefined) {
+      pairOffer();
+    }
+    // Saving row: every line-level discount on the cart (the pair deal is the only automatic one).
+    let saved = 0, savedCur = "";
+    lines.forEach(l => (l.discountAllocations || []).forEach(a => { saved += Number(a.discountedAmount.amount); savedCur = a.discountedAmount.currencyCode; }));
+    $("cartSaving").hidden = !(saved > 0);
+    if (saved > 0) $("cartSavingAmt").textContent = "−" + fmt(saved, savedCur);
     const st = cart.cost.subtotalAmount;
     $("cartSubtotal").textContent = fmt(st.amount, st.currencyCode);
     $("checkoutLink").href = withAttribution(cart.checkoutUrl);
     drawerFoot.hidden = false;
   }
   function setCart(c) { cart = c; saveCart(c); renderCart(); }
+
+  /* Pair offer amount. Shopify holds the deal (an automatic discount: a fixed amount off each sconce when the cart
+     has two or more). To show the right amount in the visitor's currency, and to hide the offer when the discount
+     is off, price a two-sconce cart once per session and read the discount Shopify applies to it.
+     pairOff: undefined = not checked yet, null = no deal, { amount, currencyCode } = off each sconce. */
+  let pairOff;
+  const PAIR_KEY = "tp-pair";
+  async function pairOffer() {
+    if (pairOff !== undefined || !variantId) return;
+    pairOff = null;
+    try {
+      const s = JSON.parse(sessionStorage.getItem(PAIR_KEY) || "null");
+      if (s && s.country === country && Date.now() - s.at < 36e5) { pairOff = s.off; renderCart(); return; }
+    } catch (e) {}
+    try {
+      const d = await sf(`mutation N($input: CartInput!) { cartCreate(input: $input) { cart { lines(first: 1) { nodes { quantity
+        discountAllocations { discountedAmount { amount currencyCode } } } } } } }`,
+        { input: { lines: [{ merchandiseId: variantId, quantity: 2 }], buyerIdentity: { countryCode: country } } });
+      const l = d.cartCreate && d.cartCreate.cart && d.cartCreate.cart.lines.nodes[0];
+      let total = 0, cur = "";
+      (l && l.discountAllocations || []).forEach(a => { total += Number(a.discountedAmount.amount); cur = a.discountedAmount.currencyCode; });
+      pairOff = total > 0 ? { amount: String(Math.round(total / 2 * 100) / 100), currencyCode: cur } : null;
+      try { sessionStorage.setItem(PAIR_KEY, JSON.stringify({ country, off: pairOff, at: Date.now() })); } catch (e) {}
+    } catch (e) { pairOff = null; }
+    renderCart();
+  }
 
   async function changeLine(row, lineId, quantity) {
     row.classList.add("busy");
