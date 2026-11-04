@@ -1,0 +1,8 @@
+{
+  "redirects": [
+    { "source": "/ybl/", "destination": "/ybl", "permanent": false }
+  ],
+  "rewrites": [
+    { "source": "/ybl", "destination": "/index.html" }
+  ]
+}
