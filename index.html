@@ -1059,13 +1059,23 @@ body.lb-open { overflow: hidden; }
     } catch (e) { return url; }
   };
   /* Hidden funnel page view for visitors credited to a creator link (see "creator links" above).
-     Uses the saved tags, so a visitor who came from /ybl and returns within 30 days still counts. */
+     Uses the saved tags, so a visitor who came from /ybl and returns within 30 days still counts.
+     The path is swapped in by a beforeSend hook for that one page view only; passing a path to
+     va("pageview") would make Vercel file every later event under it too. */
+  let vaNextPath = null;
+  window.va("beforeSend", ev => {
+    if (vaNextPath && ev && ev.type === "pageview") {
+      try { const u = new URL(ev.url, location.origin); u.pathname = vaNextPath; u.search = ""; u.hash = ""; ev = { ...ev, url: u.toString() }; } catch (e) {}
+      vaNextPath = null;
+    }
+    return ev;
+  });
   const creatorStep = step => {
     const src = attribution && attribution.tags && attribution.tags.utm_source;
     const slug = Object.keys(CREATOR_LINKS).find(k => CREATOR_LINKS[k].utm_source === src);
     if (!slug) return;
-    const path = `/${slug}/${step}`;
-    try { window.va("pageview", { route: path, path }); } catch (e) {}
+    vaNextPath = `/${slug}/${step}`;
+    try { window.va("pageview", {}); } catch (e) { vaNextPath = null; }
   };
   const cartAttributes = () => {
     if (!attribution) return [];
