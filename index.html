@@ -666,6 +666,7 @@ body.lb-open { overflow: hidden; }
   <div class="drawer-body" id="drawerBody"></div>
   <div class="drawer-foot" id="drawerFoot" hidden>
     <div class="saving" id="cartSaving" hidden><span>Pair saving</span><span class="num" id="cartSavingAmt"></span></div>
+    <div class="saving" id="cartCode" hidden><span id="cartCodeName">Discount</span><span class="num" id="cartCodeAmt"></span></div>
     <div class="subtotal"><span>Subtotal</span><span class="num" id="cartSubtotal"></span></div>
     <p class="note">Shipping and taxes are calculated at checkout. Orders ship by November 20.</p>
     <a class="checkout" id="checkoutLink" href="#">Check out</a>
@@ -1102,7 +1103,8 @@ body.lb-open { overflow: hidden; }
   const saveCart = c => { try { localStorage.setItem(CART_KEY, JSON.stringify(c ? { id: c.id, checkoutUrl: c.checkoutUrl, totalQuantity: c.totalQuantity } : null)); } catch (e) {} };
   const CART_FIELDS = `id checkoutUrl totalQuantity cost { subtotalAmount { amount currencyCode } }
     lines(first: 20) { nodes { id quantity cost { subtotalAmount { amount currencyCode } totalAmount { amount currencyCode } }
-      discountAllocations { discountedAmount { amount currencyCode } } merchandise { ... on ProductVariant { id product { title } } } } }`;
+      discountAllocations { __typename discountedAmount { amount currencyCode } ... on CartCodeDiscountAllocation { code } }
+      merchandise { ... on ProductVariant { id product { title } } } } }`;
   const fab = $("cartFab"), drawerEl = $("drawer"), drawerBody = $("drawerBody"), drawerFoot = $("drawerFoot");
   let cart = null, drawerOpen = false, lastFocus = null;
 
@@ -1136,11 +1138,16 @@ body.lb-open { overflow: hidden; }
       const rm = document.createElement("button"); rm.type = "button"; rm.className = "remove"; rm.textContent = "Remove";
       ctl.append(q, rm); info.append(name, ctl);
       const amt = document.createElement("div"); amt.className = "amt num";
+      // Cross out the price only for the pair deal (Shopify's automatic discount, two or more sconces).
+      // A discount code (e.g. FRIENDS) leaves the line at full price and shows as its own row under the cart.
       const before = l.cost.subtotalAmount;
-      if (before && Number(before.amount) > Number(t.amount) + 0.004) {
+      const pairCut = (l.discountAllocations || []).filter(a => a.__typename !== "CartCodeDiscountAllocation")
+        .reduce((n, a) => n + Number(a.discountedAmount.amount), 0);
+      if (pairCut > 0.004) {
         const was = document.createElement("s"); was.textContent = fmt(before.amount, before.currencyCode); amt.appendChild(was);
       }
-      const now = document.createElement("span"); now.textContent = fmt(t.amount, t.currencyCode); amt.appendChild(now);
+      const now = document.createElement("span");
+      now.textContent = fmt(Math.round((Number(before.amount) - pairCut) * 100) / 100, before.currencyCode); amt.appendChild(now);
       row.append(img, info, amt); drawerBody.appendChild(row);
       minus.addEventListener("click", () => changeLine(row, l.id, l.quantity - 1));
       plus.addEventListener("click", () => changeLine(row, l.id, Math.min(10, l.quantity + 1)));
@@ -1164,11 +1171,20 @@ body.lb-open { overflow: hidden; }
     } else if (one && pairOff === undefined) {
       pairOffer();
     }
-    // Saving row: every line-level discount on the cart (the pair deal is the only automatic one).
-    let saved = 0, savedCur = "";
-    lines.forEach(l => (l.discountAllocations || []).forEach(a => { saved += Number(a.discountedAmount.amount); savedCur = a.discountedAmount.currencyCode; }));
+    // Saving rows: the pair deal (automatic) and any discount code, each on its own row.
+    let saved = 0, savedCur = "", coded = 0, codedCur = "", codes = [];
+    lines.forEach(l => (l.discountAllocations || []).forEach(a => {
+      const v = Number(a.discountedAmount.amount);
+      if (a.__typename === "CartCodeDiscountAllocation") { coded += v; codedCur = a.discountedAmount.currencyCode; if (a.code && !codes.includes(a.code)) codes.push(a.code); }
+      else { saved += v; savedCur = a.discountedAmount.currencyCode; }
+    }));
     $("cartSaving").hidden = !(saved > 0);
     if (saved > 0) $("cartSavingAmt").textContent = "−" + fmt(saved, savedCur);
+    $("cartCode").hidden = !(coded > 0);
+    if (coded > 0) {
+      $("cartCodeName").textContent = codes.length ? "Code " + codes.join(", ") : "Discount";
+      $("cartCodeAmt").textContent = "−" + fmt(coded, codedCur);
+    }
     const st = cart.cost.subtotalAmount;
     $("cartSubtotal").textContent = fmt(st.amount, st.currencyCode);
     $("checkoutLink").href = withAttribution(cart.checkoutUrl);
