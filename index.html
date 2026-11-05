@@ -487,7 +487,6 @@ body.lb-open { overflow: hidden; }
         <ul class="trust" aria-label="What you get">
           <li><a href="#shipping" data-open="shipping">30-day returns</a></li>
           <li><a href="#warranty" data-open="warranty">2-year warranty</a></li>
-          <li><a href="#about">Made in Toronto</a></li>
           <li><a href="https://designto.org/awards/2026-designto-awards/" target="_blank" rel="noopener">DesignTO 2026 Juror's Choice</a></li>
         </ul>
         <p class="addnote" id="addNote" role="status"></p>
@@ -717,10 +716,6 @@ body.lb-open { overflow: hidden; }
     e.preventDefault();
     d.open = true;
     d.scrollIntoView({ block: "start", behavior: "smooth" });
-  }));
-  document.querySelectorAll('.trust a[href="#about"]').forEach(a => a.addEventListener("click", e => {
-    const t = $("about"); if (!t) return;
-    e.preventDefault(); t.scrollIntoView({ block: "start", behavior: "smooth" });
   }));
 
   /* ---------- film ---------- */
